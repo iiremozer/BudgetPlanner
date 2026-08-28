@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { groupEntriesByDay } from '../lib/savings.js';
 import { formatMoney } from '../lib/money.js';
 import { formatDayLabel, formatTime } from '../lib/dates.js';
+import { iconForEmoji } from '../lib/icons.js';
+import { colorOf } from '../lib/colors.js';
+import Icon from './Icon.jsx';
 
 const PAGE = 6;
 
@@ -37,8 +40,11 @@ export default function Ledger({ entries, goals, currency, generalName, lastId, 
                 const goal = entry.goalId ? goalById.get(entry.goalId) : null;
                 return (
                   <div key={entry.id} className={`row${entry.id === lastId ? ' row-new' : ''}`}>
-                    <span className="row-emoji" aria-hidden="true">
-                      {entry.emoji || '💰'}
+                    <span
+                      className="row-icon"
+                      style={{ color: goal ? colorOf(goal.color).base : 'var(--muted)' }}
+                    >
+                      <Icon name={iconForEmoji(entry.emoji)} size={19} />
                     </span>
                     <div className="row-body">
                       <div className="row-note">{entry.note || 'Saved'}</div>
@@ -53,10 +59,10 @@ export default function Ledger({ entries, goals, currency, generalName, lastId, 
                           value={entry.goalId ?? ''}
                           onChange={(e) => onReassign(entry.id, e.target.value || null)}
                         >
-                          <option value="">💰 {generalName}</option>
+                          <option value="">{generalName}</option>
                           {goals.map((g) => (
                             <option key={g.id} value={g.id}>
-                              {g.emoji} {g.name}
+                              {g.name}
                             </option>
                           ))}
                         </select>

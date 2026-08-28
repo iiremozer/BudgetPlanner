@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { parseAmount, formatMoney, CURRENCIES } from '../lib/money.js';
 import { PRESETS, presetAmount } from '../lib/presets.js';
 import { sortGoals, primaryGoal } from '../lib/goals.js';
+import { iconForEmoji } from '../lib/icons.js';
+import { colorOf } from '../lib/colors.js';
+import Icon from './Icon.jsx';
 
 export default function EntryForm({ currency, goals, entries, generalName, onAdd }) {
   const [note, setNote] = useState('');
@@ -70,8 +73,8 @@ export default function EntryForm({ currency, goals, entries, generalName, onAdd
               aria-pressed={picked === preset.id}
               onClick={() => choose(preset)}
             >
-              <span className="tile-emoji" aria-hidden="true">
-                {preset.emoji}
+              <span className="tile-icon">
+                <Icon name={iconForEmoji(preset.emoji)} size={22} />
               </span>
               <span className="tile-label">{preset.label}</span>
             </button>
@@ -109,8 +112,10 @@ export default function EntryForm({ currency, goals, entries, generalName, onAdd
                   setGoalId(goal.id);
                   setTouchedGoal(true);
                 }}
+                style={{ '--tone': colorOf(goal.color).base }}
               >
-                {goal.emoji} {goal.name}
+                <Icon name={iconForEmoji(goal.emoji)} size={16} />
+                {goal.name}
               </button>
             ))}
             <button
@@ -122,7 +127,8 @@ export default function EntryForm({ currency, goals, entries, generalName, onAdd
                 setTouchedGoal(true);
               }}
             >
-              💰 {generalName}
+              <Icon name="coins" size={16} />
+              {generalName}
             </button>
           </div>
         </div>

@@ -335,15 +335,14 @@ select {
   line-height: 0;
 }
 
-.jar-emoji {
+.jar-icon {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 21px;
-  line-height: 1;
-  padding-top: 16px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+  padding-top: 14px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
+  transition: color 0.4s ease;
 }
 
 /* Sıvı seviyesi yumuşak yükselsin. */
@@ -819,4 +818,40 @@ select {
   border-color: #fff;
   box-shadow: 0 0 0 2px var(--ink);
   transform: scale(1.08);
+}
+
+.tile-icon {
+  display: grid;
+  place-items: center;
+  color: var(--pine);
+}
+
+.tile[aria-pressed='true'] .tile-icon {
+  color: #fff;
+}
+
+.chip-icon {
+  padding: 9px 13px;
+  color: var(--ink);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--tone, var(--pine));
+  border-color: var(--tone, var(--pine));
+}
+
+.row-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: #f6f4f0;
+  border-radius: 11px;
 }

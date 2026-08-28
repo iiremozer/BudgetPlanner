@@ -65,7 +65,7 @@ describe('uygulama açılışı', () => {
     );
 
     render(<App />);
-    expect(screen.getByText('Japan')).toBeTruthy();
+    expect(screen.getAllByText('Japan').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Coffee').length).toBeGreaterThan(1);
     // Toplam, hedefin birikeni ve kayıt satırı — üçünde de aynı tutar görünür.
     expect(screen.getAllByText(/£26\.00/).length).toBeGreaterThan(0);
