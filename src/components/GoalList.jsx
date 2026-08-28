@@ -122,7 +122,7 @@ export default function GoalList({
         const line = planLine(goal, p, entries, currency);
         return (
           <article key={goal.id} className={`goal${p.complete ? ' goal-done' : ''}`}>
-            <Jar ratio={p.ratio} emoji={goal.emoji} complete={p.complete} />
+            <Jar ratio={p.ratio} emoji={goal.emoji} complete={p.complete} id={goal.id} />
 
             <div className="goal-body">
               <div className="goal-name">
