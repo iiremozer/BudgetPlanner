@@ -7,9 +7,20 @@ Eşimle ortak kullanmak üzere yapıldı.
 
 ## Nasıl çalışır
 
-- Kayıtlar yalnızca tarayıcının kendi deposunda (localStorage) tutulur. Sunucu yok, hesap yok.
+- Varsayılan olarak kayıtlar yalnızca tarayıcının kendi deposunda tutulur.
 - Telefonda tarayıcıda aç → "Ana ekrana ekle" de. İkonu olur, tam ekran açılır.
-- Her cihazın defteri kendinedir; şu an cihazlar arası eşitleme yoktur.
+- İki kişi ortak defter tutabilir: bir kişi defter açar, kodu paylaşır, diğeri koda katılır.
+  Kod bilen herkes deftere erişir; şifre yoktur.
+
+## Ortak defter
+
+Sunucu tarafı `supabase/setup.sql` ile kurulur. `books` tablosunda hiç erişim
+politikası yoktur; veriye yalnızca `book_read` ve `book_write` fonksiyonları
+üzerinden, defter kodu bilinerek ulaşılır. Publishable key açıktır, olması gerektiği gibi.
+
+Kayıtlar yalnızca eklenir, bu yüzden iki cihaz çakışmaz: birleştirme kimliklerin
+birleşimidir. Silinen şeyler `deleted` listesinde tutulur ki karşı cihaz onları
+geri diriltmesin.
 
 ## Komutlar
 
@@ -46,4 +57,4 @@ seçili olmalıdır.
 - Kategori bazlı bütçe limitleri
 - Aylık ve haftalık planlama
 - Çevrimdışı çalışma (service worker)
-- Cihazlar arası paylaşım
+- Hedef tamamlandığında kutlama anı

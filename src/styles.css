@@ -583,3 +583,48 @@ select {
   border-radius: 10px;
   font-size: 17px;
 }
+
+.code-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 16px;
+  background: #fbfaf8;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.code-value {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+.code-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.code-input {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sync-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sync-error {
+  color: #b4442f;
+}

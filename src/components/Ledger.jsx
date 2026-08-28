@@ -44,6 +44,7 @@ export default function Ledger({ entries, goals, currency, lastId, onRemove }) {
                       <div className="row-note">{entry.note || 'Saved'}</div>
                       <div className="row-sub">
                         {formatTime(entry.at)}
+                        {entry.by ? ` · ${entry.by}` : ''}
                         {goal ? ` · ${goal.emoji} ${goal.name}` : ''}
                       </div>
                     </div>
