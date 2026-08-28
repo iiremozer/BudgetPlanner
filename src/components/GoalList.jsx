@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
-import { goalProgress } from '../lib/savings.js';
+import { goalProgress, savedForGoal } from '../lib/savings.js';
+import { milestoneProgress } from '../lib/milestones.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
@@ -41,12 +42,16 @@ export default function GoalList({
   onUnshare,
   onJoin,
   onSyncNow,
+  generalName,
+  onRenameGeneral,
 }) {
   const [openShare, setOpenShare] = useState(null);
   const [joining, setJoining] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [copied, setCopied] = useState(null);
+  const [renaming, setRenaming] = useState(false);
+  const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [hasTarget, setHasTarget] = useState(true);
@@ -109,7 +114,7 @@ export default function GoalList({
     <section className="card">
       <div className="card-head">
         <h2 className="card-title">Goals</h2>
-        {goals.length > 0 ? <span className="card-note">{goals.length}</span> : null}
+        <span className="card-note">{goals.length + 1}</span>
       </div>
 
       {goals.length === 0 && !open ? (
@@ -245,6 +250,78 @@ export default function GoalList({
           </article>
         );
       })}
+
+      {(() => {
+        const generalTotal = savedForGoal(entries, null);
+        const p = milestoneProgress(generalTotal);
+        return (
+          <article className={`goal${goals.length ? ' goal-general' : ''}`}>
+            <Jar ratio={p.ratio} emoji="💰" id="general" />
+
+            <div className="goal-body">
+              {renaming ? (
+                <div className="stack">
+                  <input
+                    className="control"
+                    type="text"
+                    value={generalDraft}
+                    maxLength={40}
+                    onChange={(e) => setGeneralDraft(e.target.value)}
+                  />
+                  <div className="share-foot">
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => {
+                        setGeneralDraft(generalName);
+                        setRenaming(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        onRenameGeneral(generalDraft);
+                        setRenaming(false);
+                      }}
+                    >
+                      Save name
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="goal-name">
+                    {generalName}
+                    <span className="goal-badge">Everything else</span>
+                  </div>
+                  <div className="goal-figure">
+                    <strong>{formatMoney(p.saved, currency)}</strong> saved
+                  </div>
+                  <div className="goal-pace">
+                    Next milestone {formatMoney(p.target, currency)} ·{' '}
+                    {formatMoney(p.remaining, currency)} to go
+                  </div>
+                  <div className="goal-actions">
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => {
+                        setGeneralDraft(generalName);
+                        setRenaming(true);
+                      }}
+                    >
+                      Rename
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </article>
+        );
+      })()}
 
       {joining ? (
         <div className="stack" style={{ marginTop: goals.length ? 18 : 0 }}>

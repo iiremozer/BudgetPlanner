@@ -212,3 +212,21 @@ describe('ortak defter alanları', () => {
     expect(s.entries[0].by).toBe('İrem');
   });
 });
+
+describe('genel kavanozun adı', () => {
+  it('verilmezse varsayılanı alır', () => {
+    expect(normalizeState({}).generalName).toBe('Everyday pot');
+  });
+
+  it('kullanıcının adını korur ve kırpar', () => {
+    expect(normalizeState({ generalName: '  Günlük  ' }).generalName).toBe('Günlük');
+  });
+
+  it('boş ad varsayılana döner', () => {
+    expect(normalizeState({ generalName: '   ' }).generalName).toBe('Everyday pot');
+  });
+
+  it('çok uzun adı kısaltır', () => {
+    expect(normalizeState({ generalName: 'x'.repeat(80) }).generalName).toHaveLength(40);
+  });
+});

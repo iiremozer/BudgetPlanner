@@ -3,7 +3,7 @@ import { parseAmount, formatMoney, CURRENCIES } from '../lib/money.js';
 import { PRESETS, presetAmount } from '../lib/presets.js';
 import { sortGoals, primaryGoal } from '../lib/goals.js';
 
-export default function EntryForm({ currency, goals, entries, onAdd }) {
+export default function EntryForm({ currency, goals, entries, generalName, onAdd }) {
   const [note, setNote] = useState('');
   const [amount, setAmount] = useState('');
   const [goalId, setGoalId] = useState(null);
@@ -122,7 +122,7 @@ export default function EntryForm({ currency, goals, entries, onAdd }) {
                 setTouchedGoal(true);
               }}
             >
-              💰 General pot
+              💰 {generalName}
             </button>
           </div>
         </div>

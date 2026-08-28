@@ -25,7 +25,7 @@ describe('uygulama açılışı', () => {
 
   it('toplam sıfırdan başlar', () => {
     render(<App />);
-    expect(screen.getByText('£0.00')).toBeTruthy();
+    expect(screen.getAllByText('£0.00').length).toBeGreaterThan(0);
   });
 
   it('ana bölümlerin hepsi görünür', () => {
@@ -76,5 +76,30 @@ describe('uygulama açılışı', () => {
     window.localStorage.setItem('ortak-birikim-defteri:v1', '{bu json değil');
     render(<App />);
     expect(screen.getByText('Our Savings Book')).toBeTruthy();
+  });
+});
+
+describe('genel kavanoz', () => {
+  it('hedefler arasında varsayılan adıyla görünür', () => {
+    render(<App />);
+    expect(screen.getAllByText('Everyday pot').length).toBeGreaterThan(0);
+  });
+
+  it('hedefe bağlanmamış kayıtları toplar', () => {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        generalName: 'Günlük kasa',
+        goals: [],
+        entries: [
+          { id: 'e1', amount: 400, goalId: null, at: '2026-01-02T10:00:00.000Z', note: 'Coffee' },
+          { id: 'e2', amount: 600, goalId: null, at: '2026-01-02T11:00:00.000Z', note: 'Taxi' },
+        ],
+      })
+    );
+    render(<App />);
+    expect(screen.getAllByText('Günlük kasa').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Next milestone/)).toBeTruthy();
   });
 });

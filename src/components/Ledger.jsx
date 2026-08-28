@@ -5,7 +5,7 @@ import { formatDayLabel, formatTime } from '../lib/dates.js';
 
 const PAGE = 6;
 
-export default function Ledger({ entries, goals, currency, lastId, onRemove, onReassign }) {
+export default function Ledger({ entries, goals, currency, generalName, lastId, onRemove, onReassign }) {
   const [expanded, setExpanded] = useState(false);
   const goalById = new Map(goals.map((g) => [g.id, g]));
 
@@ -53,7 +53,7 @@ export default function Ledger({ entries, goals, currency, lastId, onRemove, onR
                           value={entry.goalId ?? ''}
                           onChange={(e) => onReassign(entry.id, e.target.value || null)}
                         >
-                          <option value="">💰 General pot</option>
+                          <option value="">💰 {generalName}</option>
                           {goals.map((g) => (
                             <option key={g.id} value={g.id}>
                               {g.emoji} {g.name}

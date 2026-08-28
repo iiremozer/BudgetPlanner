@@ -741,3 +741,9 @@ select {
   width: auto;
   padding: 9px 18px;
 }
+
+.goal-general {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}

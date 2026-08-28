@@ -4,6 +4,9 @@ import { emptyDeleted } from './sync.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
+/** Hedefe bağlanmamış kayıtların toplandığı kavanozun varsayılan adı. */
+export const DEFAULT_GENERAL_NAME = 'Everyday pot';
+
 export function makeId(prefix = 'id') {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
@@ -13,6 +16,7 @@ export function defaultState() {
     version: 2,
     currency: DEFAULT_CURRENCY,
     currencyAt: null,
+    generalName: DEFAULT_GENERAL_NAME,
     goals: [],
     entries: [],
     deleted: emptyDeleted(),
@@ -110,6 +114,10 @@ export function normalizeState(raw) {
     version: 2,
     currency,
     currencyAt: typeof raw.currencyAt === 'string' ? raw.currencyAt : null,
+    generalName:
+      typeof raw.generalName === 'string' && raw.generalName.trim()
+        ? raw.generalName.trim().slice(0, 40)
+        : DEFAULT_GENERAL_NAME,
     goals,
     entries,
     deleted,

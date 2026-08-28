@@ -294,6 +294,7 @@ export default function App() {
         currency={state.currency}
         goals={state.goals}
         entries={state.entries}
+        generalName={state.generalName}
         onAdd={addEntry}
       />
 
@@ -304,6 +305,13 @@ export default function App() {
         memberName={state.member?.name}
         syncStatus={statusText(status, lastSync)}
         onSyncNow={sync}
+        generalName={state.generalName}
+        onRenameGeneral={(name) =>
+          setState((prev) => ({
+            ...prev,
+            generalName: name.trim() || prev.generalName,
+          }))
+        }
         onAdd={addGoal}
         onRemove={removeGoal}
         onMove={reorderGoal}
@@ -316,6 +324,7 @@ export default function App() {
         entries={state.entries}
         goals={state.goals}
         currency={state.currency}
+        generalName={state.generalName}
         lastId={burst?.id}
         onRemove={removeEntry}
         onReassign={reassignEntry}
