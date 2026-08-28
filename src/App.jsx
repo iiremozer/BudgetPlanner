@@ -128,7 +128,7 @@ export default function App() {
     }));
   }
 
-  function addGoal({ name, target, emoji, plan }) {
+  function addGoal({ name, target, emoji, plan, share }) {
     const now = new Date().toISOString();
     const goal = {
       id: makeId('g'),
@@ -136,7 +136,7 @@ export default function App() {
       target,
       emoji,
       plan: plan ?? null,
-      share: null,
+      share: share ?? null,
       createdAt: now,
       updatedAt: now,
     };

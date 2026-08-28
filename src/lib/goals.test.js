@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortGoals, normalizeOrders, moveGoal, primaryGoal } from './goals.js';
+import { sortGoals, normalizeOrders, moveGoal, primaryGoal, uniqueGoalName } from './goals.js';
 
 const goal = (id, order, createdAt = '2026-01-01T00:00:00Z', target = 10000) => ({
   id,
@@ -88,5 +88,28 @@ describe('primaryGoal', () => {
   it('açık uçlu hedef hiç tamamlanmaz', () => {
     const goals = [goal('acik', 0, '2026-01-01T00:00:00Z', 0)];
     expect(primaryGoal(goals, [entry(999999, 'acik')]).id).toBe('acik');
+  });
+});
+
+describe('uniqueGoalName', () => {
+  it('boş listede temel adı verir', () => {
+    expect(uniqueGoalName('Savings', [])).toBe('Savings');
+  });
+
+  it('ad doluysa numaralandırır', () => {
+    expect(uniqueGoalName('Savings', [{ name: 'Savings' }])).toBe('Savings 2');
+  });
+
+  it('boşluğu atlayarak devam eder', () => {
+    const goals = [{ name: 'Savings' }, { name: 'Savings 2' }];
+    expect(uniqueGoalName('Savings', goals)).toBe('Savings 3');
+  });
+
+  it('büyük küçük harf farkını yok sayar', () => {
+    expect(uniqueGoalName('Savings', [{ name: 'savings' }])).toBe('Savings 2');
+  });
+
+  it('bozuk kayıtları atlar', () => {
+    expect(uniqueGoalName('Savings', [null, { name: 42 }])).toBe('Savings');
   });
 });

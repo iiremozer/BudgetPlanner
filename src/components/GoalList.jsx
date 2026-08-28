@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
 import { goalProgress } from '../lib/savings.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
-import { sortGoals } from '../lib/goals.js';
+import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
 import Jar from './Jar.jsx';
 
@@ -53,6 +53,7 @@ export default function GoalList({
   const [perPeriod, setPerPeriod] = useState('');
   const [period, setPeriod] = useState('week');
   const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [shareOnCreate, setShareOnCreate] = useState(false);
   const [error, setError] = useState('');
 
   const targetValue = hasTarget ? parseAmount(target) : 0;
@@ -76,25 +77,29 @@ export default function GoalList({
     setPeriod('week');
     setHasTarget(true);
     setEmoji(EMOJIS[0]);
+    setShareOnCreate(false);
     setError('');
     setOpen(false);
   }
 
   function submit() {
     const trimmed = name.trim();
-    if (!trimmed) {
+    // Hedefsiz birikimde ad zorunlu değil; adsız kalırsa kendimiz veririz.
+    const finalName = trimmed || (hasTarget ? '' : uniqueGoalName('Savings', goals));
+    if (!finalName) {
       setError('Give the goal a name.');
       return;
     }
     if (hasTarget && (targetValue === null || targetValue <= 0)) {
-      setError('Enter a target amount, or switch to open-ended.');
+      setError('Enter a target amount, or switch to just saving.');
       return;
     }
     onAdd({
-      name: trimmed,
+      name: finalName,
       target: hasTarget ? targetValue : 0,
       emoji,
       plan: hasTarget && perValue ? { perPeriod: perValue, period } : null,
+      share: shareOnCreate ? { code: makeBookCode() } : null,
     });
     reset();
   }
@@ -163,10 +168,10 @@ export default function GoalList({
                 </button>
                 <button
                   type="button"
-                  className="link"
+                  className={`share-btn${goal.share ? ' share-btn-on' : ''}`}
                   onClick={() => setOpenShare(openShare === goal.id ? null : goal.id)}
                 >
-                  {goal.share ? 'Sharing' : 'Share'}
+                  {goal.share ? '👥 Shared' : '👥 Share'}
                 </button>
                 <button type="button" className="link" onClick={() => onRemove(goal.id)}>
                   Remove
@@ -264,13 +269,13 @@ export default function GoalList({
         <div className="stack" style={{ marginTop: goals.length ? 18 : 0 }}>
           <div>
             <label className="field-label" htmlFor="goal-name">
-              Name
+              {hasTarget ? 'Name' : 'Name (optional)'}
             </label>
             <input
               id="goal-name"
               className="control"
               type="text"
-              placeholder="Summer trip"
+              placeholder={hasTarget ? 'Summer trip' : 'Savings'}
               value={name}
               maxLength={40}
               onChange={(e) => setName(e.target.value)}
@@ -344,6 +349,33 @@ export default function GoalList({
               </div>
             </>
           ) : null}
+
+          <div>
+            <span className="field-label">Who is it for</span>
+            <div className="segmented">
+              <button
+                type="button"
+                className="segment"
+                aria-pressed={!shareOnCreate}
+                onClick={() => setShareOnCreate(false)}
+              >
+                Just me
+              </button>
+              <button
+                type="button"
+                className="segment"
+                aria-pressed={shareOnCreate}
+                onClick={() => setShareOnCreate(true)}
+              >
+                Shared
+              </button>
+            </div>
+            {shareOnCreate ? (
+              <p className="preview">
+                You will get a code to send. Only this goal leaves your phone.
+              </p>
+            ) : null}
+          </div>
 
           <div>
             <span className="field-label">Icon</span>

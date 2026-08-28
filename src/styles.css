@@ -692,3 +692,20 @@ select {
   font-size: 12px;
   color: var(--muted);
 }
+
+.share-btn {
+  padding: 5px 11px;
+  background: #f6f4f0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.share-btn-on {
+  background: rgba(47, 143, 111, 0.12);
+  border-color: rgba(47, 143, 111, 0.3);
+  color: var(--mint);
+  font-weight: 600;
+}
