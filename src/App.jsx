@@ -1,18 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Masthead from './components/Masthead.jsx';
-import EntryForm from './components/EntryForm.jsx';
-import GoalList from './components/GoalList.jsx';
-import Ledger from './components/Ledger.jsx';
-import MemberCard from './components/MemberCard.jsx';
-import { loadState, saveState, makeId } from './lib/storage.js';
-import { totalSaved, currentStreak } from './lib/savings.js';
-import { formatMoney } from './lib/money.js';
-import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
-import { moveGoal, normalizeOrders } from './lib/goals.js';
-import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
-
 const BURST_MS = 1050;
-const SYNC_DEBOUNCE_MS = 1200;
+
+// Eşitleme sıklığı. Eşitlemenin kendisi de state'i değiştirdiği için
+// "her değişiklikte eşitle" kurmak sonsuz döngü yaratır. Bunun yerine:
+// kullanıcı bir şey yaptıysa en fazla dakikada bir gönder, karşı tarafın
+// değişikliklerini beş dakikada bir çek, uygulamaya dönünce ve aşağı
+// çekince hemen bak.
+const PUSH_EVERY_MS = 60_000;
+const PULL_EVERY_MS = 5 * 60_000;
+const FOCUS_MIN_GAP_MS = 20_000;
+const TICK_MS = 20_000;
+const PULL_THRESHOLD = 64;
 
 function statusText(status, lastSync) {
   if (status === 'syncing') return 'Syncing…';
@@ -31,26 +28,23 @@ export default function App() {
   const [burst, setBurst] = useState(null);
   const [status, setStatus] = useState('idle');
   const [lastSync, setLastSync] = useState(null);
+  const [pullDistance, setPullDistance] = useState(0);
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
-  const syncTimer = useRef(null);
   const inFlight = useRef(false);
+  const dirty = useRef(false);
+  const lastSyncAt = useRef(0);
+  const pullStart = useRef(null);
 
   useEffect(() => {
     stateRef.current = state;
     saveState(state);
   }, [state]);
 
-  useEffect(() => () => {
-    clearTimeout(burstTimer.current);
-    clearTimeout(syncTimer.current);
-  }, []);
+  useEffect(() => () => clearTimeout(burstTimer.current), []);
 
-  const sharedCodes = state.goals
-    .filter((g) => g.share?.code)
-    .map((g) => `${g.id}:${g.share.code}`)
-    .join(',');
+  const hasShared = state.goals.some((g) => g.share?.code);
 
   const sync = useCallback(async () => {
     if (!isRemoteConfigured() || inFlight.current) return;
@@ -70,6 +64,8 @@ export default function App() {
         setState(merged);
         await writeBook(code, shareableGoal(merged, goal.id));
       }
+      dirty.current = false;
+      lastSyncAt.current = Date.now();
       setStatus('idle');
       setLastSync(new Date());
     } catch {
@@ -79,19 +75,49 @@ export default function App() {
     }
   }, []);
 
+  // Düzenli yoklama. Kullanıcı bir şey değiştirdiyse daha sık gönderir.
   useEffect(() => {
-    if (!sharedCodes) return undefined;
-    clearTimeout(syncTimer.current);
-    syncTimer.current = setTimeout(sync, SYNC_DEBOUNCE_MS);
-    return () => clearTimeout(syncTimer.current);
-  }, [sharedCodes, sync, state.entries, state.goals]);
+    if (!hasShared) return undefined;
+    const tick = () => {
+      const since = Date.now() - lastSyncAt.current;
+      if ((dirty.current && since >= PUSH_EVERY_MS) || since >= PULL_EVERY_MS) sync();
+    };
+    tick();
+    const id = setInterval(tick, TICK_MS);
+    return () => clearInterval(id);
+  }, [hasShared, sync]);
 
+  // Uygulamaya geri dönünce bak.
   useEffect(() => {
-    if (!sharedCodes) return undefined;
-    const onFocus = () => sync();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [sharedCodes, sync]);
+    if (!hasShared) return undefined;
+    const onWake = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - lastSyncAt.current >= FOCUS_MIN_GAP_MS) sync();
+    };
+    window.addEventListener('focus', onWake);
+    document.addEventListener('visibilitychange', onWake);
+    return () => {
+      window.removeEventListener('focus', onWake);
+      document.removeEventListener('visibilitychange', onWake);
+    };
+  }, [hasShared, sync]);
+
+  // Sayfayı aşağı çekince yenile.
+  function onTouchStart(e) {
+    pullStart.current = window.scrollY <= 0 ? e.touches[0].clientY : null;
+  }
+
+  function onTouchMove(e) {
+    if (pullStart.current === null) return;
+    const delta = e.touches[0].clientY - pullStart.current;
+    setPullDistance(delta > 0 ? Math.min(delta * 0.5, 90) : 0);
+  }
+
+  function onTouchEnd() {
+    if (pullDistance >= PULL_THRESHOLD) sync();
+    pullStart.current = null;
+    setPullDistance(0);
+  }
 
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
@@ -106,6 +132,7 @@ export default function App() {
       by: state.member?.name ?? '',
       at: new Date().toISOString(),
     };
+    dirty.current = true;
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
     setBurst(entry);
     if (navigator.vibrate) navigator.vibrate(18);
@@ -114,6 +141,7 @@ export default function App() {
   }
 
   function removeEntry(id) {
+    dirty.current = true;
     setState((prev) => ({
       ...prev,
       entries: prev.entries.filter((e) => e.id !== id),
@@ -122,6 +150,7 @@ export default function App() {
   }
 
   function reassignEntry(id, goalId) {
+    dirty.current = true;
     setState((prev) => ({
       ...prev,
       entries: prev.entries.map((e) => (e.id === id ? { ...e, goalId } : e)),
@@ -129,6 +158,7 @@ export default function App() {
   }
 
   function addGoal({ name, target, emoji, plan, share }) {
+    dirty.current = true;
     const now = new Date().toISOString();
     const goal = {
       id: makeId('g'),
@@ -144,6 +174,7 @@ export default function App() {
   }
 
   function removeGoal(id) {
+    dirty.current = true;
     setState((prev) => ({
       ...prev,
       goals: normalizeOrders(prev.goals.filter((g) => g.id !== id)),
@@ -153,10 +184,12 @@ export default function App() {
   }
 
   function reorderGoal(id, direction) {
+    dirty.current = true;
     setState((prev) => ({ ...prev, goals: moveGoal(prev.goals, id, direction) }));
   }
 
   function shareGoal(id, code) {
+    dirty.current = true;
     setState((prev) => ({
       ...prev,
       goals: prev.goals.map((g) => (g.id === id ? { ...g, share: { code } } : g)),
@@ -164,6 +197,7 @@ export default function App() {
   }
 
   function unshareGoal(id) {
+    dirty.current = true;
     setState((prev) => ({
       ...prev,
       goals: prev.goals.map((g) => (g.id === id ? { ...g, share: null } : g)),
@@ -189,6 +223,8 @@ export default function App() {
       stateRef.current = withShare;
       setState(withShare);
       await writeBook(code, shareableGoal(withShare, goalId));
+      dirty.current = false;
+      lastSyncAt.current = Date.now();
       setStatus('idle');
       setLastSync(new Date());
     } catch {
@@ -199,7 +235,26 @@ export default function App() {
   const sharedCount = state.goals.filter((g) => g.share?.code).length;
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {hasShared ? (
+        <div className="refresh" style={{ height: pullDistance }}>
+          {pullDistance > 0 || status === 'syncing' ? (
+            <span className="refresh-text">
+              {status === 'syncing'
+                ? 'Syncing…'
+                : pullDistance >= PULL_THRESHOLD
+                  ? 'Release to refresh'
+                  : 'Pull to refresh'}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       <Masthead
         currency={state.currency}
         onCurrencyChange={(currency) =>
@@ -235,6 +290,7 @@ export default function App() {
         currency={state.currency}
         memberName={state.member?.name}
         syncStatus={statusText(status, lastSync)}
+        onSyncNow={sync}
         onAdd={addGoal}
         onRemove={removeGoal}
         onMove={reorderGoal}

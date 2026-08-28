@@ -40,6 +40,7 @@ export default function GoalList({
   onShare,
   onUnshare,
   onJoin,
+  onSyncNow,
 }) {
   const [openShare, setOpenShare] = useState(null);
   const [joining, setJoining] = useState(false);
@@ -202,10 +203,24 @@ export default function GoalList({
                       else stay on your phone. Anyone with the code can open this goal, so share it
                       carefully.
                     </p>
-                    <p className="sync-status">{syncStatus}</p>
-                    <button type="button" className="link" onClick={() => onUnshare(goal.id)}>
-                      Stop sharing
-                    </button>
+                    <div className="sync-row">
+                      <span className="sync-status">{syncStatus}</span>
+                      <button type="button" className="link" onClick={onSyncNow}>
+                        Sync now
+                      </button>
+                    </div>
+                    <div className="share-foot">
+                      <button type="button" className="link" onClick={() => onUnshare(goal.id)}>
+                        Stop sharing
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setOpenShare(null)}
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="share-panel">
@@ -216,11 +231,12 @@ export default function GoalList({
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      onClick={() => {
-                        onShare(goal.id, makeBookCode());
-                      }}
+                      onClick={() => onShare(goal.id, makeBookCode())}
                     >
                       Create a share code
+                    </button>
+                    <button type="button" className="link" onClick={() => setOpenShare(null)}>
+                      Close
                     </button>
                   </div>
                 )

@@ -716,3 +716,28 @@ select {
   color: var(--mint);
   font-weight: 600;
 }
+
+.refresh {
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.refresh-text {
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 6px;
+}
+
+.share-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.share-foot .btn-ghost {
+  width: auto;
+  padding: 9px 18px;
+}
