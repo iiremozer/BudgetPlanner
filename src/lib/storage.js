@@ -1,4 +1,5 @@
 import { DEFAULT_CURRENCY, isCurrencyCode } from './money.js';
+import { isPeriod, DEFAULT_PERIOD } from './pace.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
@@ -21,11 +22,22 @@ function cleanGoal(raw) {
   const name = typeof raw.name === 'string' ? raw.name.trim() : '';
   if (!id || !name) return null;
   const target = Number.isFinite(raw.target) ? Math.max(0, Math.round(raw.target)) : 0;
+
+  let plan = null;
+  const rawPlan = raw.plan;
+  if (rawPlan && typeof rawPlan === 'object' && Number.isFinite(rawPlan.perPeriod) && rawPlan.perPeriod > 0) {
+    plan = {
+      perPeriod: Math.round(rawPlan.perPeriod),
+      period: isPeriod(rawPlan.period) ? rawPlan.period : DEFAULT_PERIOD,
+    };
+  }
+
   return {
     id,
     name,
     emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎯',
     target,
+    plan,
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date(0).toISOString(),
   };
 }

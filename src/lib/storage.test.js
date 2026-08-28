@@ -150,3 +150,25 @@ describe('kayıt simgesi', () => {
     expect(s.entries[0].emoji).toBeNull();
   });
 });
+
+describe('hedef planı', () => {
+  it('geçerli planı korur', () => {
+    const s = normalizeState({ goals: [{ ...goal, plan: { perPeriod: 5000, period: 'month' } }] });
+    expect(s.goals[0].plan).toEqual({ perPeriod: 5000, period: 'month' });
+  });
+
+  it('bilinmeyen dönemi haftaya çevirir', () => {
+    const s = normalizeState({ goals: [{ ...goal, plan: { perPeriod: 5000, period: 'decade' } }] });
+    expect(s.goals[0].plan.period).toBe('week');
+  });
+
+  it('sıfır katkılı planı atar', () => {
+    const s = normalizeState({ goals: [{ ...goal, plan: { perPeriod: 0, period: 'week' } }] });
+    expect(s.goals[0].plan).toBeNull();
+  });
+
+  it('plan yoksa null olur', () => {
+    const s = normalizeState({ goals: [goal] });
+    expect(s.goals[0].plan).toBeNull();
+  });
+});

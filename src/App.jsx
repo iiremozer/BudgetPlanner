@@ -43,8 +43,15 @@ export default function App() {
     setState((prev) => ({ ...prev, entries: prev.entries.filter((e) => e.id !== id) }));
   }
 
-  function addGoal({ name, target, emoji }) {
-    const goal = { id: makeId('g'), name, target, emoji, createdAt: new Date().toISOString() };
+  function addGoal({ name, target, emoji, plan }) {
+    const goal = {
+      id: makeId('g'),
+      name,
+      target,
+      emoji,
+      plan: plan ?? null,
+      createdAt: new Date().toISOString(),
+    };
     setState((prev) => ({ ...prev, goals: [...prev.goals, goal] }));
   }
 

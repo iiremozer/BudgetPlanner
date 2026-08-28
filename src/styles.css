@@ -317,25 +317,42 @@ select {
 
 /* ---------- goals ---------- */
 
+.goal {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
 .goal + .goal {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 18px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.goal-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.jar {
+  position: relative;
+  flex: none;
+  line-height: 0;
 }
 
-.goal-emoji {
+.jar-emoji {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   font-size: 22px;
   line-height: 1;
+  padding-top: 12px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.goal-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
 }
 
 .goal-name {
-  flex: 1;
   font-size: 16px;
   font-weight: 600;
 }
@@ -343,51 +360,70 @@ select {
 .goal-figure {
   font-size: 14px;
   color: var(--muted);
-  white-space: nowrap;
+  margin-top: 3px;
 }
 
-.goal-track {
-  height: 10px;
-  margin-top: 10px;
-  background: #f1eee8;
-  border-radius: 999px;
-  overflow: hidden;
+.goal-figure strong {
+  color: var(--ink);
+  font-weight: 650;
 }
 
-.goal-fill {
-  height: 100%;
-  background: var(--honey);
-  border-radius: 999px;
-  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.goal-done .goal-fill {
-  background: var(--mint);
-}
-
-.goal-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+.goal-pace {
   font-size: 13px;
   color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
-.goal-done-tag {
-  color: var(--mint);
+.goal-tag {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--mint);
 }
 
 .link {
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 6px 0 0;
   font-size: 13px;
   color: var(--muted);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: #f4f2ee;
+  border-radius: 12px;
+}
+
+.segment {
+  padding: 10px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segment[aria-pressed='true'] {
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.preview {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--mint);
+  font-weight: 500;
 }
 
 /* ---------- activity ---------- */
