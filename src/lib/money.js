@@ -2,10 +2,10 @@
 // Böylece 0.1 + 0.2 gibi ondalık hataları hiç oluşmaz.
 
 export const CURRENCIES = {
-  GBP: { code: 'GBP', symbol: '£', label: 'Sterlin', decimalSep: '.', groupSep: ',' },
-  TRY: { code: 'TRY', symbol: '₺', label: 'Türk Lirası', decimalSep: ',', groupSep: '.' },
+  GBP: { code: 'GBP', symbol: '£', label: 'Pound', decimalSep: '.', groupSep: ',' },
+  TRY: { code: 'TRY', symbol: '₺', label: 'Turkish lira', decimalSep: ',', groupSep: '.' },
   EUR: { code: 'EUR', symbol: '€', label: 'Euro', decimalSep: ',', groupSep: '.' },
-  USD: { code: 'USD', symbol: '$', label: 'Dolar', decimalSep: '.', groupSep: ',' },
+  USD: { code: 'USD', symbol: '$', label: 'US dollar', decimalSep: '.', groupSep: ',' },
 };
 
 export const CURRENCY_CODES = Object.keys(CURRENCIES);

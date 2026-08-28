@@ -15,57 +15,52 @@ export default function EntryForm({ currency, goals, onAdd }) {
 
   function submit() {
     if (parsed === null) {
-      setError('Tutarı sayı olarak yaz, örneğin 5 ya da 4,50.');
+      setError('Enter the amount as a number, like 5 or 4.50.');
       return;
     }
     if (parsed <= 0) {
-      setError('Sıfırdan büyük bir tutar gerekiyor.');
+      setError('The amount needs to be more than zero.');
       return;
     }
-    onAdd({
-      amount: parsed,
-      note: note.trim(),
-      goalId: goalId === '' ? null : goalId,
-    });
+    onAdd({ amount: parsed, note: note.trim(), goalId: goalId === '' ? null : goalId });
     setNote('');
     setAmount('');
     setError('');
   }
 
   return (
-    <section className="section">
-      <div className="section-head">
-        <h2 className="section-title">Bugünün kazancı</h2>
-        <span className="section-note">{symbol}</span>
+    <section className="card">
+      <div className="card-head">
+        <h2 className="card-title">Log a win</h2>
       </div>
 
-      <div className="form">
-        <div className="field">
+      <div className="stack">
+        <div>
           <label className="field-label" htmlFor="note">
-            Ne yapmadın
+            What you skipped
           </label>
           <input
             id="note"
             className="control"
             type="text"
-            placeholder="Kahve almadım"
+            placeholder="Skipped a coffee"
             value={note}
             maxLength={80}
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
 
-        <div className="form-row">
-          <div className="field">
+        <div className="two-up">
+          <div>
             <label className="field-label" htmlFor="amount">
-              Cebinde kalan
+              Amount saved
             </label>
             <input
               id="amount"
               className="control control-amount"
               type="text"
               inputMode="decimal"
-              placeholder={`${symbol}0,00`}
+              placeholder={`${symbol}0.00`}
               value={amount}
               onChange={(e) => {
                 setAmount(e.target.value);
@@ -74,9 +69,9 @@ export default function EntryForm({ currency, goals, onAdd }) {
             />
           </div>
 
-          <div className="field">
+          <div>
             <label className="field-label" htmlFor="goal">
-              Hangi hedefe
+              Goal
             </label>
             <select
               id="goal"
@@ -84,7 +79,7 @@ export default function EntryForm({ currency, goals, onAdd }) {
               value={goalId}
               onChange={(e) => setGoalId(e.target.value)}
             >
-              <option value="">Genel kasa</option>
+              <option value="">General pot</option>
               {goals.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.emoji} {g.name}
@@ -94,12 +89,13 @@ export default function EntryForm({ currency, goals, onAdd }) {
           </div>
         </div>
 
-        <div className="quick">
+        <div className="chips">
           {QUICK.map((q) => (
             <button
               key={q}
               type="button"
-              className="quick-chip"
+              className="chip"
+              aria-pressed={parsed === q * 100}
               onClick={() => {
                 setAmount(String(q));
                 setError('');
@@ -112,8 +108,8 @@ export default function EntryForm({ currency, goals, onAdd }) {
 
         {error ? <p className="error">{error}</p> : null}
 
-        <button type="button" className="press" onClick={submit} disabled={!ready}>
-          Deftere işle
+        <button type="button" className="btn" onClick={submit} disabled={!ready}>
+          Add to the book
         </button>
       </div>
     </section>

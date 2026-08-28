@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Cover from './components/Cover.jsx';
+import Masthead from './components/Masthead.jsx';
 import EntryForm from './components/EntryForm.jsx';
 import GoalList from './components/GoalList.jsx';
 import Ledger from './components/Ledger.jsx';
-import Stamp from './components/Stamp.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
 
-const STAMP_MS = 1150;
+const BURST_MS = 1050;
 
 export default function App() {
   const [state, setState] = useState(() => loadState());
-  const [stamp, setStamp] = useState(null);
+  const [burst, setBurst] = useState(null);
   const timer = useRef(null);
 
   useEffect(() => {
@@ -25,18 +24,12 @@ export default function App() {
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
 
   function addEntry({ amount, note, goalId }) {
-    const entry = {
-      id: makeId('e'),
-      amount,
-      note,
-      goalId,
-      at: new Date().toISOString(),
-    };
+    const entry = { id: makeId('e'), amount, note, goalId, at: new Date().toISOString() };
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
-    setStamp(entry);
+    setBurst(entry);
     if (navigator.vibrate) navigator.vibrate(18);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setStamp(null), STAMP_MS);
+    timer.current = setTimeout(() => setBurst(null), BURST_MS);
   }
 
   function removeEntry(id) {
@@ -56,49 +49,52 @@ export default function App() {
     }));
   }
 
-  function setCurrency(currency) {
-    setState((prev) => ({ ...prev, currency }));
-  }
-
   return (
-    <div className="book">
-      <Cover currency={state.currency} onCurrencyChange={setCurrency} />
+    <div className="app">
+      <Masthead
+        currency={state.currency}
+        onCurrencyChange={(currency) => setState((prev) => ({ ...prev, currency }))}
+      />
 
-      <main className="page">
-        <div className="total">
-          <p className="total-label">Toplam Birikim</p>
-          <p className="total-amount">{formatMoney(total, state.currency)}</p>
-          <div className="total-meta">
-            <span className={`badge${streak > 0 ? ' badge-hot' : ''}`}>
-              {streak > 0 ? `${streak} gün üst üste` : 'Seri bekliyor'}
-            </span>
-            <span className="badge">{state.entries.length} kazanç</span>
-          </div>
+      <section className="hero">
+        <p className="hero-label">Total saved</p>
+        <p className={`hero-amount${burst ? ' is-bumped' : ''}`}>
+          {formatMoney(total, state.currency)}
+        </p>
+        <div className="hero-meta">
+          <span className={`pill${streak > 0 ? ' pill-live' : ''}`}>
+            {streak > 0 ? `${streak} day streak` : 'No streak yet'}
+          </span>
+          <span className="pill">
+            {state.entries.length} {state.entries.length === 1 ? 'win' : 'wins'}
+          </span>
         </div>
+      </section>
 
-        <EntryForm currency={state.currency} goals={state.goals} onAdd={addEntry} />
+      <EntryForm currency={state.currency} goals={state.goals} onAdd={addEntry} />
 
-        <GoalList
-          goals={state.goals}
-          entries={state.entries}
-          currency={state.currency}
-          onAdd={addGoal}
-          onRemove={removeGoal}
-        />
+      <GoalList
+        goals={state.goals}
+        entries={state.entries}
+        currency={state.currency}
+        onAdd={addGoal}
+        onRemove={removeGoal}
+      />
 
-        <Ledger
-          entries={state.entries}
-          goals={state.goals}
-          currency={state.currency}
-          lastId={stamp?.id}
-          onRemove={removeEntry}
-        />
-      </main>
+      <Ledger
+        entries={state.entries}
+        goals={state.goals}
+        currency={state.currency}
+        lastId={burst?.id}
+        onRemove={removeEntry}
+      />
 
-      <footer className="colophon">Bu defter yalnızca bu cihazda tutulur</footer>
+      <p className="footnote">Saved on this device only</p>
 
-      {stamp ? (
-        <Stamp amount={stamp.amount} currency={state.currency} at={stamp.at} />
+      {burst ? (
+        <div className="burst" aria-hidden="true">
+          <div className="burst-pill">+{formatMoney(burst.amount, state.currency)}</div>
+        </div>
       ) : null}
     </div>
   );

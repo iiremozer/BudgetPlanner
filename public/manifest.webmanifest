@@ -1,17 +1,32 @@
 {
-  "name": "Ortak Birikim Defteri",
-  "short_name": "Birikim Defteri",
-  "description": "Harcamadığın her kuruşu deftere işleyen ortak birikim defteri.",
-  "lang": "tr",
+  "name": "Our Savings Book",
+  "short_name": "Savings Book",
+  "description": "A shared savings book for the money you did not spend.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#12291f",
-  "theme_color": "#143026",
+  "background_color": "#fffcf7",
+  "theme_color": "#1e3a34",
   "icons": [
-    { "src": "./defter-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./defter-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "./defter.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "./defter-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./defter-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./defter.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }

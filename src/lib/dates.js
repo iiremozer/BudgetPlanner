@@ -1,13 +1,13 @@
 import { dayKey } from './savings.js';
 
-const AYLAR = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const GUNLER = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/** "2026-03-10" anahtarını yerel bir Date nesnesine çevirir. */
+/** Turns a "2026-03-10" key back into a local Date. */
 export function dateFromDayKey(key) {
   if (typeof key !== 'string') return null;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
@@ -16,7 +16,7 @@ export function dateFromDayKey(key) {
   return new Date(Number(y), Number(m) - 1, Number(d));
 }
 
-/** Defter sayfasındaki gün başlığı: "Bugün", "Dün" ya da "10 Mart, Salı". */
+/** Day heading: "Today", "Yesterday", or "Saturday, March 7". */
 export function formatDayLabel(key, now = new Date()) {
   const date = dateFromDayKey(key);
   if (!date) return '';
@@ -25,17 +25,16 @@ export function formatDayLabel(key, now = new Date()) {
   const yesterday = new Date(now instanceof Date ? now.getTime() : new Date(now).getTime());
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (key === today) return 'Bugün';
-  if (key === dayKey(yesterday)) return 'Dün';
+  if (key === today) return 'Today';
+  if (key === dayKey(yesterday)) return 'Yesterday';
 
-  const sameYear = date.getFullYear() === new Date(now).getFullYear();
-  const base = `${date.getDate()} ${AYLAR[date.getMonth()]}`;
-  return sameYear
-    ? `${base}, ${GUNLER[date.getDay()]}`
-    : `${base} ${date.getFullYear()}`;
+  const base = `${MONTHS[date.getMonth()]} ${date.getDate()}`;
+  return date.getFullYear() === new Date(now).getFullYear()
+    ? `${WEEKDAYS[date.getDay()]}, ${base}`
+    : `${base}, ${date.getFullYear()}`;
 }
 
-/** Kayıt satırındaki saat: "09:05". */
+/** Row timestamp: "09:05". */
 export function formatTime(value) {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return '';
