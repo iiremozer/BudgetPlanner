@@ -133,3 +133,20 @@ describe('makeId', () => {
     expect(makeId('goal').startsWith('goal_')).toBe(true);
   });
 });
+
+describe('kayıt simgesi', () => {
+  it('simgeyi korur', () => {
+    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null, emoji: '☕' }] });
+    expect(s.entries[0].emoji).toBe('☕');
+  });
+
+  it('simge yoksa null olur', () => {
+    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null }] });
+    expect(s.entries[0].emoji).toBeNull();
+  });
+
+  it('simge yerine sayı gelirse null olur', () => {
+    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null, emoji: 42 }] });
+    expect(s.entries[0].emoji).toBeNull();
+  });
+});

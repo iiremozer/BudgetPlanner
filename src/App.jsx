@@ -23,8 +23,15 @@ export default function App() {
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
 
-  function addEntry({ amount, note, goalId }) {
-    const entry = { id: makeId('e'), amount, note, goalId, at: new Date().toISOString() };
+  function addEntry({ amount, note, goalId, emoji }) {
+    const entry = {
+      id: makeId('e'),
+      amount,
+      note,
+      goalId,
+      emoji: emoji ?? null,
+      at: new Date().toISOString(),
+    };
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
     setBurst(entry);
     if (navigator.vibrate) navigator.vibrate(18);

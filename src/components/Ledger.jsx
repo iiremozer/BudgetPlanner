@@ -37,6 +37,9 @@ export default function Ledger({ entries, goals, currency, lastId, onRemove }) {
                 const goal = entry.goalId ? goalById.get(entry.goalId) : null;
                 return (
                   <div key={entry.id} className={`row${entry.id === lastId ? ' row-new' : ''}`}>
+                    <span className="row-emoji" aria-hidden="true">
+                      {entry.emoji || '💰'}
+                    </span>
                     <div className="row-body">
                       <div className="row-note">{entry.note || 'Saved'}</div>
                       <div className="row-sub">

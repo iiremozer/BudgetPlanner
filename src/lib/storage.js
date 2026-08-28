@@ -45,6 +45,7 @@ function cleanEntry(raw, goalIds) {
     amount,
     at,
     goalId,
+    emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : null,
     note: typeof raw.note === 'string' ? raw.note.trim() : '',
   };
 }
