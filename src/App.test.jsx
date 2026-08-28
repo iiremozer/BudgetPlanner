@@ -103,3 +103,25 @@ describe('genel kavanoz', () => {
     expect(screen.getByText(/Next milestone/)).toBeTruthy();
   });
 });
+
+describe('renkler', () => {
+  it('hedef kartı kendi rengini taşır', () => {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        goals: [
+          { id: 'g1', name: 'Beach', emoji: '🏖️', color: 'ocean', target: 100000, order: 0, createdAt: '2026-01-01T00:00:00.000Z' },
+          { id: 'g2', name: 'Car', emoji: '🚗', color: 'coral', target: 100000, order: 1, createdAt: '2026-01-01T00:00:00.000Z' },
+        ],
+        entries: [],
+      })
+    );
+    const { container } = render(<App />);
+    const tinted = container.querySelectorAll('.goal-tinted');
+    // iki hedef artı genel kavanoz
+    expect(tinted.length).toBe(3);
+    const tones = [...tinted].map((el) => el.style.getPropertyValue('--tone'));
+    expect(new Set(tones).size).toBe(3);
+  });
+});

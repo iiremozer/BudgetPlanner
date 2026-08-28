@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
 import { goalProgress, savedForGoal } from '../lib/savings.js';
 import { milestoneProgress } from '../lib/milestones.js';
+import { PALETTE, SLATE, colorOf, colorForEmoji } from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
@@ -59,6 +60,7 @@ export default function GoalList({
   const [perPeriod, setPerPeriod] = useState('');
   const [period, setPeriod] = useState('week');
   const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [color, setColor] = useState(colorForEmoji(EMOJIS[0]));
   const [shareOnCreate, setShareOnCreate] = useState(false);
   const [error, setError] = useState('');
 
@@ -83,6 +85,7 @@ export default function GoalList({
     setPeriod('week');
     setHasTarget(true);
     setEmoji(EMOJIS[0]);
+    setColor(colorForEmoji(EMOJIS[0]));
     setShareOnCreate(false);
     setError('');
     setOpen(false);
@@ -104,6 +107,7 @@ export default function GoalList({
       name: finalName,
       target: hasTarget ? targetValue : 0,
       emoji,
+      color,
       plan: hasTarget && perValue ? { perPeriod: perValue, period } : null,
       share: shareOnCreate ? { code: makeBookCode() } : null,
     });
@@ -126,9 +130,20 @@ export default function GoalList({
       {sortGoals(goals).map((goal, index, list) => {
         const p = goalProgress(goal, entries);
         const line = planLine(goal, p, entries, currency);
+        const tone = colorOf(goal.color);
         return (
-          <article key={goal.id} className={`goal${p.complete ? ' goal-done' : ''}`}>
-            <Jar ratio={p.ratio} emoji={goal.emoji} complete={p.complete} id={goal.id} />
+          <article
+            key={goal.id}
+            className={`goal goal-tinted${p.complete ? ' goal-done' : ''}`}
+            style={{ '--tone': tone.base, '--tone-tint': tone.tint }}
+          >
+            <Jar
+              ratio={p.ratio}
+              emoji={goal.emoji}
+              complete={p.complete}
+              id={goal.id}
+              color={tone}
+            />
 
             <div className="goal-body">
               <div className="goal-name">
@@ -139,7 +154,7 @@ export default function GoalList({
                 ) : null}
               </div>
               <div className="goal-figure">
-                <strong>{formatMoney(p.saved, currency)}</strong>
+                <strong className="goal-amount">{formatMoney(p.saved, currency)}</strong>
                 {p.target > 0 ? ` of ${formatMoney(p.target, currency)}` : ' saved'}
               </div>
 
@@ -255,8 +270,11 @@ export default function GoalList({
         const generalTotal = savedForGoal(entries, null);
         const p = milestoneProgress(generalTotal);
         return (
-          <article className={`goal${goals.length ? ' goal-general' : ''}`}>
-            <Jar ratio={p.ratio} emoji="💰" id="general" />
+          <article
+            className={`goal goal-tinted${goals.length ? ' goal-general' : ''}`}
+            style={{ '--tone': SLATE.base, '--tone-tint': SLATE.tint }}
+          >
+            <Jar ratio={p.ratio} emoji="💰" id="general" color={SLATE} />
 
             <div className="goal-body">
               {renaming ? (
@@ -298,7 +316,7 @@ export default function GoalList({
                     <span className="goal-badge">Everything else</span>
                   </div>
                   <div className="goal-figure">
-                    <strong>{formatMoney(p.saved, currency)}</strong> saved
+                    <strong className="goal-amount">{formatMoney(p.saved, currency)}</strong> saved
                   </div>
                   <div className="goal-pace">
                     Next milestone {formatMoney(p.target, currency)} ·{' '}
@@ -479,10 +497,30 @@ export default function GoalList({
                   type="button"
                   className="chip"
                   aria-pressed={emoji === e}
-                  onClick={() => setEmoji(e)}
+                  onClick={() => {
+                    setEmoji(e);
+                    setColor(colorForEmoji(e));
+                  }}
                 >
                   {e}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="field-label">Colour</span>
+            <div className="swatches">
+              {PALETTE.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="swatch"
+                  aria-label={c.name}
+                  aria-pressed={color === c.id}
+                  style={{ background: c.base }}
+                  onClick={() => setColor(c.id)}
+                />
               ))}
             </div>
           </div>

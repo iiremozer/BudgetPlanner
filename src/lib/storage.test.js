@@ -230,3 +230,19 @@ describe('genel kavanozun adı', () => {
     expect(normalizeState({ generalName: 'x'.repeat(80) }).generalName).toHaveLength(40);
   });
 });
+
+describe('hedef rengi', () => {
+  it('geçerli rengi korur', () => {
+    expect(normalizeState({ goals: [{ ...goal, color: 'ocean' }] }).goals[0].color).toBe('ocean');
+  });
+
+  it('renk yoksa simgeden türetir', () => {
+    const s = normalizeState({ goals: [{ ...goal, emoji: '🪴', color: undefined }] });
+    expect(s.goals[0].color).toBe('green');
+  });
+
+  it('bilinmeyen rengi simgeden türetir', () => {
+    const s = normalizeState({ goals: [{ ...goal, emoji: '🚗', color: 'neon' }] });
+    expect(s.goals[0].color).toBe('coral');
+  });
+});

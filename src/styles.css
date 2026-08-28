@@ -747,3 +747,76 @@ select {
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
+
+/* ---------- renkli kavanozlar ---------- */
+
+.goal-tinted {
+  position: relative;
+  padding: 14px 14px 14px 12px;
+  border-radius: 14px;
+  background: var(--tone-tint);
+  overflow: hidden;
+}
+
+.goal-tinted::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--tone);
+}
+
+.goal + .goal.goal-tinted {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: none;
+}
+
+.goal-general {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: none;
+}
+
+.goal-amount {
+  color: var(--tone);
+}
+
+.goal-tinted .goal-badge {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.goal-tinted .icon-btn,
+.goal-tinted .share-btn {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+.goal-tinted .share-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(0, 0, 0, 0.07);
+}
+
+.swatches {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.swatch[aria-pressed='true'] {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--ink);
+  transform: scale(1.08);
+}

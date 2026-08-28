@@ -1,3 +1,5 @@
+import { colorOf } from '../lib/colors.js';
+
 // Kavanozu üç boyutlu göstermek için üç şey gerekiyor: camın kenarlarda
 // koyulaşıp ortada açılması, sıvının üstünde bir elips (yandan bakınca ağız
 // oval görünür) ve altta bir gölge.
@@ -7,7 +9,8 @@ const BOTTOM = 116;
 const RX = 34;
 const RY = 8;
 
-export default function Jar({ ratio = 0, emoji, complete = false, size = 66, id = 'jar' }) {
+
+export default function Jar({ ratio = 0, emoji, complete = false, size = 66, id = 'jar', color }) {
   const clamped = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
   const level = BOTTOM - clamped * (BOTTOM - TOP);
   const filled = clamped > 0.01;
@@ -18,8 +21,9 @@ export default function Jar({ ratio = 0, emoji, complete = false, size = 66, id 
   const clipId = `clip-${uid}`;
   const shineId = `shine-${uid}`;
 
-  const liquidTop = complete ? '#4bb08c' : '#f0bc55';
-  const liquidBottom = complete ? '#217a5e' : '#c98b1c';
+  const tone = color ?? colorOf(undefined);
+  const liquidTop = tone.light;
+  const liquidBottom = tone.dark;
 
   const bodyPath = `M ${50 - RX} ${TOP} L ${50 - RX} ${BOTTOM - 10} A ${RX} ${RY + 4} 0 0 0 ${
     50 + RX

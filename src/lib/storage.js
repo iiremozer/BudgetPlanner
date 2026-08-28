@@ -1,6 +1,7 @@
 import { DEFAULT_CURRENCY, isCurrencyCode } from './money.js';
 import { isPeriod, DEFAULT_PERIOD } from './pace.js';
 import { emptyDeleted } from './sync.js';
+import { isColorId, colorForEmoji } from './colors.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
@@ -55,10 +56,13 @@ function cleanGoal(raw) {
     };
   }
 
+  const emoji = typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎯';
+
   return {
     id,
     name,
-    emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎯',
+    emoji,
+    color: isColorId(raw.color) ? raw.color : colorForEmoji(emoji),
     target,
     plan,
     order: Number.isFinite(raw.order) ? Math.max(0, Math.round(raw.order)) : null,
