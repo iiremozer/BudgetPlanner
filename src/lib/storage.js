@@ -1,5 +1,6 @@
 import { DEFAULT_CURRENCY, isCurrencyCode } from './money.js';
 import { isPeriod, DEFAULT_PERIOD } from './pace.js';
+import { emptyDeleted } from './sync.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
@@ -9,11 +10,30 @@ export function makeId(prefix = 'id') {
 
 export function defaultState() {
   return {
-    version: 1,
+    version: 2,
     currency: DEFAULT_CURRENCY,
+    currencyAt: null,
     goals: [],
     entries: [],
+    deleted: emptyDeleted(),
+    member: null,
+    book: null,
   };
+}
+
+/** Bu cihazın defterdeki kimliği. Ad ortak deftere yazılır, kimlik cihazda kalır. */
+function cleanMember(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = typeof raw.id === 'string' && raw.id ? raw.id : null;
+  const name = typeof raw.name === 'string' ? raw.name.trim().slice(0, 24) : '';
+  return id && name ? { id, name } : null;
+}
+
+/** Ortak defterin kodu. Kod bilen herkes deftere erişir. */
+function cleanBook(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const code = typeof raw.code === 'string' ? raw.code.trim().toUpperCase() : '';
+  return /^[A-Z0-9]{8,24}$/.test(code) ? { code } : null;
 }
 
 function cleanGoal(raw) {
@@ -39,6 +59,7 @@ function cleanGoal(raw) {
     target,
     plan,
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date(0).toISOString(),
+    updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : null,
   };
 }
 
@@ -58,6 +79,7 @@ function cleanEntry(raw, goalIds) {
     at,
     goalId,
     emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : null,
+    by: typeof raw.by === 'string' ? raw.by.trim().slice(0, 24) : '',
     note: typeof raw.note === 'string' ? raw.note.trim() : '',
   };
 }
@@ -74,7 +96,25 @@ export function normalizeState(raw) {
     ? raw.entries.map((e) => cleanEntry(e, goalIds)).filter(Boolean)
     : [];
 
-  return { version: 1, currency, goals, entries };
+  const deleted = {
+    entries: Array.isArray(raw.deleted?.entries)
+      ? raw.deleted.entries.filter((id) => typeof id === 'string' && id)
+      : [],
+    goals: Array.isArray(raw.deleted?.goals)
+      ? raw.deleted.goals.filter((id) => typeof id === 'string' && id)
+      : [],
+  };
+
+  return {
+    version: 2,
+    currency,
+    currencyAt: typeof raw.currencyAt === 'string' ? raw.currencyAt : null,
+    goals,
+    entries,
+    deleted,
+    member: cleanMember(raw.member),
+    book: cleanBook(raw.book),
+  };
 }
 
 function resolveStore(store) {

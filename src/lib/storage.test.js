@@ -172,3 +172,36 @@ describe('hedef planı', () => {
     expect(s.goals[0].plan).toBeNull();
   });
 });
+
+describe('ortak defter alanları', () => {
+  it('geçerli üyeyi korur', () => {
+    const s = normalizeState({ member: { id: 'm1', name: 'İrem' } });
+    expect(s.member).toEqual({ id: 'm1', name: 'İrem' });
+  });
+
+  it('adsız üyeyi atar', () => {
+    expect(normalizeState({ member: { id: 'm1', name: '  ' } }).member).toBeNull();
+  });
+
+  it('geçerli defter kodunu büyük harfe çevirir', () => {
+    expect(normalizeState({ book: { code: 'abcd1234' } }).book).toEqual({ code: 'ABCD1234' });
+  });
+
+  it('kısa kodu reddeder', () => {
+    expect(normalizeState({ book: { code: 'ABC' } }).book).toBeNull();
+  });
+
+  it('silinen kimlik listesini korur', () => {
+    const s = normalizeState({ deleted: { entries: ['a', 'b'], goals: ['g1'] } });
+    expect(s.deleted).toEqual({ entries: ['a', 'b'], goals: ['g1'] });
+  });
+
+  it('bozuk silme listesini boşaltır', () => {
+    expect(normalizeState({ deleted: 'çöp' }).deleted).toEqual({ entries: [], goals: [] });
+  });
+
+  it('kaydı kimin girdiğini saklar', () => {
+    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null, by: 'İrem' }] });
+    expect(s.entries[0].by).toBe('İrem');
+  });
+});
