@@ -98,3 +98,66 @@ export function shareable(state) {
     deleted: state?.deleted ?? emptyDeleted(),
   };
 }
+
+
+// ---------- hedef bazında paylaşım ----------
+//
+// Bütün defteri paylaşmak yerine tek bir hedef paylaşılır. Sunucuya yalnızca
+// o hedefin kendisi ve ona yazılmış kayıtlar gider; diğer hedefler, genel kasa
+// ve cihaza özel her şey cihazda kalır.
+
+/** Sunucuya gidecek paket: yalnızca bu hedef ve onun kayıtları. */
+export function shareableGoal(state, goalId) {
+  const goal = (state?.goals ?? []).find((g) => g?.id === goalId);
+  if (!goal) return null;
+  const { share, ...withoutShare } = goal;
+  return {
+    goal: withoutShare,
+    entries: (state?.entries ?? []).filter((e) => e?.goalId === goalId),
+    deleted: {
+      entries: [...(state?.deleted?.entries ?? [])],
+      goals: [...(state?.deleted?.goals ?? [])],
+    },
+  };
+}
+
+/**
+ * Uzaktan gelen hedef paketini yerel deftere işler.
+ * Başka hedeflerin kayıtlarına ve genel kasaya dokunmaz.
+ */
+export function mergeGoalBook(local, remote, goalId) {
+  if (!local || typeof local !== 'object') return local;
+  if (!remote || typeof remote !== 'object' || !remote.goal) return local;
+
+  const deleted = {
+    entries: unionIds(local.deleted?.entries, remote.deleted?.entries),
+    goals: unionIds(local.deleted?.goals, remote.deleted?.goals),
+  };
+  const goneEntries = new Set(deleted.entries);
+
+  const mine = (local.entries ?? []).filter((e) => e?.goalId === goalId);
+  const others = (local.entries ?? []).filter((e) => e?.goalId !== goalId);
+
+  const merged = new Map([...indexById(remote.entries), ...indexById(mine)]);
+  const forGoal = [...merged.values()]
+    .filter((e) => !goneEntries.has(e.id))
+    .map((e) => ({ ...e, goalId }));
+
+  const entries = [...others, ...forGoal].sort((a, b) => timeOf(a.at) - timeOf(b.at));
+
+  const localGoal = (local.goals ?? []).find((g) => g?.id === goalId);
+  const winner = pickNewer(localGoal, { ...remote.goal, id: goalId });
+  // Paylaşım kodu ve sıra numarası cihaza aittir, uzaktan gelen sürüm bunları ezmez.
+  const nextGoal = {
+    ...winner,
+    id: goalId,
+    share: localGoal?.share ?? null,
+    order: Number.isFinite(localGoal?.order) ? localGoal.order : winner.order ?? 0,
+  };
+
+  const goals = (local.goals ?? []).some((g) => g?.id === goalId)
+    ? local.goals.map((g) => (g.id === goalId ? nextGoal : g))
+    : [...(local.goals ?? []), nextGoal];
+
+  return { ...local, goals, entries, deleted };
+}

@@ -5,7 +5,7 @@ import { formatDayLabel, formatTime } from '../lib/dates.js';
 
 const PAGE = 6;
 
-export default function Ledger({ entries, goals, currency, lastId, onRemove }) {
+export default function Ledger({ entries, goals, currency, lastId, onRemove, onReassign }) {
   const [expanded, setExpanded] = useState(false);
   const goalById = new Map(goals.map((g) => [g.id, g]));
 
@@ -45,8 +45,22 @@ export default function Ledger({ entries, goals, currency, lastId, onRemove }) {
                       <div className="row-sub">
                         {formatTime(entry.at)}
                         {entry.by ? ` · ${entry.by}` : ''}
-                        {goal ? ` · ${goal.emoji} ${goal.name}` : ''}
                       </div>
+                      {goals.length > 0 ? (
+                        <select
+                          className="row-goal-pick"
+                          aria-label="Which goal this went to"
+                          value={entry.goalId ?? ''}
+                          onChange={(e) => onReassign(entry.id, e.target.value || null)}
+                        >
+                          <option value="">💰 General pot</option>
+                          {goals.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.emoji} {g.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
                     </div>
                     <span className="row-amount">+{formatMoney(entry.amount, currency)}</span>
                     <button

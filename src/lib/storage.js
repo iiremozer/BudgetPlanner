@@ -17,7 +17,6 @@ export function defaultState() {
     entries: [],
     deleted: emptyDeleted(),
     member: null,
-    book: null,
   };
 }
 
@@ -29,8 +28,8 @@ function cleanMember(raw) {
   return id && name ? { id, name } : null;
 }
 
-/** Ortak defterin kodu. Kod bilen herkes deftere erişir. */
-function cleanBook(raw) {
+/** Bir hedefin paylaşım kodu. Kodu bilen herkes o hedefe erişir. */
+function cleanShare(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const code = typeof raw.code === 'string' ? raw.code.trim().toUpperCase() : '';
   return /^[A-Z0-9]{8,24}$/.test(code) ? { code } : null;
@@ -58,6 +57,8 @@ function cleanGoal(raw) {
     emoji: typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎯',
     target,
     plan,
+    order: Number.isFinite(raw.order) ? Math.max(0, Math.round(raw.order)) : null,
+    share: cleanShare(raw.share),
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date(0).toISOString(),
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : null,
   };
@@ -113,7 +114,6 @@ export function normalizeState(raw) {
     entries,
     deleted,
     member: cleanMember(raw.member),
-    book: cleanBook(raw.book),
   };
 }
 

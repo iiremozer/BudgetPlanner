@@ -183,12 +183,19 @@ describe('ortak defter alanları', () => {
     expect(normalizeState({ member: { id: 'm1', name: '  ' } }).member).toBeNull();
   });
 
-  it('geçerli defter kodunu büyük harfe çevirir', () => {
-    expect(normalizeState({ book: { code: 'abcd1234' } }).book).toEqual({ code: 'ABCD1234' });
+  it('hedefin paylaşım kodunu büyük harfe çevirir', () => {
+    const s = normalizeState({ goals: [{ ...goal, share: { code: 'abcd1234' } }] });
+    expect(s.goals[0].share).toEqual({ code: 'ABCD1234' });
   });
 
-  it('kısa kodu reddeder', () => {
-    expect(normalizeState({ book: { code: 'ABC' } }).book).toBeNull();
+  it('kısa paylaşım kodunu reddeder', () => {
+    const s = normalizeState({ goals: [{ ...goal, share: { code: 'ABC' } }] });
+    expect(s.goals[0].share).toBeNull();
+  });
+
+  it('hedefin sıra numarasını korur', () => {
+    const s = normalizeState({ goals: [{ ...goal, order: 3 }] });
+    expect(s.goals[0].order).toBe(3);
   });
 
   it('silinen kimlik listesini korur', () => {

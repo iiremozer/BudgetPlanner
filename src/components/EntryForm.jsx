@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseAmount, formatMoney, CURRENCIES } from '../lib/money.js';
 import { PRESETS, presetAmount } from '../lib/presets.js';
+import { sortGoals, primaryGoal } from '../lib/goals.js';
 
-export default function EntryForm({ currency, goals, onAdd }) {
+export default function EntryForm({ currency, goals, entries, onAdd }) {
   const [note, setNote] = useState('');
   const [amount, setAmount] = useState('');
-  const [goalId, setGoalId] = useState('');
+  const [goalId, setGoalId] = useState(null);
   const [picked, setPicked] = useState(null);
   const [error, setError] = useState('');
+  const [touchedGoal, setTouchedGoal] = useState(false);
+
+  const ordered = sortGoals(goals);
+  const suggested = primaryGoal(goals, entries);
+
+  // Kullanıcı elle seçmediyse öncelik sırasındaki hedefe yaz.
+  useEffect(() => {
+    if (!touchedGoal) setGoalId(suggested ? suggested.id : null);
+  }, [suggested?.id, touchedGoal]);
 
   const symbol = CURRENCIES[currency].symbol;
   const parsed = parseAmount(amount);
@@ -36,16 +46,12 @@ export default function EntryForm({ currency, goals, onAdd }) {
       return;
     }
     const preset = PRESETS.find((p) => p.id === picked);
-    onAdd({
-      amount: parsed,
-      note: note.trim(),
-      emoji: preset ? preset.emoji : null,
-      goalId: goalId === '' ? null : goalId,
-    });
+    onAdd({ amount: parsed, note: note.trim(), emoji: preset ? preset.emoji : null, goalId });
     setNote('');
     setAmount('');
     setPicked(null);
     setError('');
+    setTouchedGoal(false);
   }
 
   return (
@@ -72,42 +78,52 @@ export default function EntryForm({ currency, goals, onAdd }) {
           ))}
         </div>
 
-        <div className="two-up">
-          <div>
-            <label className="field-label" htmlFor="amount">
-              Amount saved
-            </label>
-            <input
-              id="amount"
-              className="control control-amount"
-              type="text"
-              inputMode="decimal"
-              placeholder={`${symbol}0.00`}
-              value={amount}
-              onChange={(e) => {
-                setAmount(e.target.value);
-                if (error) setError('');
-              }}
-            />
-          </div>
+        <div>
+          <label className="field-label" htmlFor="amount">
+            Amount saved
+          </label>
+          <input
+            id="amount"
+            className="control control-amount"
+            type="text"
+            inputMode="decimal"
+            placeholder={`${symbol}0.00`}
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (error) setError('');
+            }}
+          />
+        </div>
 
-          <div>
-            <label className="field-label" htmlFor="goal">
-              Goal
-            </label>
-            <select
-              id="goal"
-              className="control"
-              value={goalId}
-              onChange={(e) => setGoalId(e.target.value)}
+        <div>
+          <span className="field-label">Goes to</span>
+          <div className="chips">
+            {ordered.map((goal) => (
+              <button
+                key={goal.id}
+                type="button"
+                className="chip"
+                aria-pressed={goalId === goal.id}
+                onClick={() => {
+                  setGoalId(goal.id);
+                  setTouchedGoal(true);
+                }}
+              >
+                {goal.emoji} {goal.name}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={goalId === null}
+              onClick={() => {
+                setGoalId(null);
+                setTouchedGoal(true);
+              }}
             >
-              <option value="">General pot</option>
-              {goals.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.emoji} {g.name}
-                </option>
-              ))}
-            </select>
+              💰 General pot
+            </button>
           </div>
         </div>
 

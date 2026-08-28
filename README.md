@@ -9,14 +9,17 @@ Eşimle ortak kullanmak üzere yapıldı.
 
 - Varsayılan olarak kayıtlar yalnızca tarayıcının kendi deposunda tutulur.
 - Telefonda tarayıcıda aç → "Ana ekrana ekle" de. İkonu olur, tam ekran açılır.
-- İki kişi ortak defter tutabilir: bir kişi defter açar, kodu paylaşır, diğeri koda katılır.
-  Kod bilen herkes deftere erişir; şifre yoktur.
+- Paylaşım hedef bazındadır: tek bir hedefi paylaşırsın, defterin geri kalanı cihazda kalır.
+  Kodu bilen herkes o hedefe erişir; şifre yoktur.
 
-## Ortak defter
+## Paylaşılan hedef
 
 Sunucu tarafı `supabase/setup.sql` ile kurulur. `books` tablosunda hiç erişim
 politikası yoktur; veriye yalnızca `book_read` ve `book_write` fonksiyonları
 üzerinden, defter kodu bilinerek ulaşılır. Publishable key açıktır, olması gerektiği gibi.
+
+Sunucuya giden paket yalnızca o hedefi ve ona yazılmış kayıtları içerir; diğer
+hedefler, genel kasa ve cihaza özel alanlar hiç çıkmaz.
 
 Kayıtlar yalnızca eklenir, bu yüzden iki cihaz çakışmaz: birleştirme kimliklerin
 birleşimidir. Silinen şeyler `deleted` listesinde tutulur ki karşı cihaz onları

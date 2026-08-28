@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeState, markDeleted, shareable, emptyDeleted } from './sync.js';
+import { mergeState, markDeleted, shareable, emptyDeleted, shareableGoal, mergeGoalBook } from './sync.js';
 
 const entry = (id, at, by = 'A') => ({ id, amount: 500, at, by, goalId: null, note: '' });
 const goal = (id, name, createdAt, updatedAt = createdAt) => ({
@@ -132,5 +132,89 @@ describe('shareable', () => {
     expect(out.member).toBeUndefined();
     expect(out.book).toBeUndefined();
     expect(out.currency).toBe('GBP');
+  });
+});
+
+describe('hedef bazında paylaşım', () => {
+  const shared = (over = {}) => ({
+    goal: { id: 'g1', name: 'Ev', target: 100000, createdAt: '2026-01-01T00:00:00Z' },
+    entries: [],
+    deleted: emptyDeleted(),
+    ...over,
+  });
+
+  const state = (over = {}) =>
+    base({
+      goals: [{ id: 'g1', name: 'Ev', target: 100000, createdAt: '2026-01-01T00:00:00Z', order: 0, share: { code: 'ABCD1234' } }],
+      ...over,
+    });
+
+  it('paket yalnızca o hedefin kayıtlarını taşır', () => {
+    const s = state({
+      entries: [
+        { ...entry('a', '2026-01-02T10:00:00Z'), goalId: 'g1' },
+        { ...entry('b', '2026-01-02T11:00:00Z'), goalId: 'g2' },
+        entry('c', '2026-01-02T12:00:00Z'),
+      ],
+    });
+    const pkg = shareableGoal(s, 'g1');
+    expect(pkg.entries.map((e) => e.id)).toEqual(['a']);
+  });
+
+  it('paylaşım kodu sunucuya gitmez', () => {
+    expect(shareableGoal(state(), 'g1').goal.share).toBeUndefined();
+  });
+
+  it('bilinmeyen hedefte null verir', () => {
+    expect(shareableGoal(state(), 'yok')).toBeNull();
+  });
+
+  it('karşı tarafın kayıtlarını ekler', () => {
+    const local = state({ entries: [{ ...entry('a', '2026-01-02T10:00:00Z'), goalId: 'g1' }] });
+    const remote = shared({ entries: [{ ...entry('b', '2026-01-03T10:00:00Z', 'B'), goalId: 'g1' }] });
+    const merged = mergeGoalBook(local, remote, 'g1');
+    expect(merged.entries.map((e) => e.id)).toEqual(['a', 'b']);
+  });
+
+  it('başka hedefin ve genel kasanın kayıtlarına dokunmaz', () => {
+    const local = state({
+      entries: [
+        { ...entry('gizli', '2026-01-02T09:00:00Z'), goalId: 'g2' },
+        entry('kasa', '2026-01-02T08:00:00Z'),
+      ],
+    });
+    const merged = mergeGoalBook(local, shared(), 'g1');
+    expect(merged.entries.map((e) => e.id).sort()).toEqual(['gizli', 'kasa']);
+  });
+
+  it('yerel paylaşım kodunu korur', () => {
+    const merged = mergeGoalBook(state(), shared(), 'g1');
+    expect(merged.goals[0].share).toEqual({ code: 'ABCD1234' });
+  });
+
+  it('yerel sıra numarasını korur', () => {
+    const local = state();
+    local.goals[0].order = 3;
+    const merged = mergeGoalBook(local, shared({ goal: { ...shared().goal, order: 0 } }), 'g1');
+    expect(merged.goals[0].order).toBe(3);
+  });
+
+  it('hedef yerelde yoksa oluşturur', () => {
+    const local = base();
+    const merged = mergeGoalBook(local, shared({ entries: [{ ...entry('a', '2026-01-02T10:00:00Z'), goalId: 'g1' }] }), 'g1');
+    expect(merged.goals.map((g) => g.id)).toEqual(['g1']);
+    expect(merged.entries).toHaveLength(1);
+  });
+
+  it('silinen kaydı geri getirmez', () => {
+    const local = state({ entries: [], deleted: { entries: ['a'], goals: [] } });
+    const remote = shared({ entries: [{ ...entry('a', '2026-01-02T10:00:00Z'), goalId: 'g1' }] });
+    expect(mergeGoalBook(local, remote, 'g1').entries).toHaveLength(0);
+  });
+
+  it('uzak paket bozuksa yereli döndürür', () => {
+    const local = state();
+    expect(mergeGoalBook(local, null, 'g1')).toBe(local);
+    expect(mergeGoalBook(local, { entries: [] }, 'g1')).toBe(local);
   });
 });

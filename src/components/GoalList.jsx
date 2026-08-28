@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
 import { goalProgress } from '../lib/savings.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
+import { sortGoals } from '../lib/goals.js';
+import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
 import Jar from './Jar.jsx';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
@@ -26,7 +28,24 @@ function planLine(goal, progress, entries, currency) {
   return `At your pace, about ${weeks} ${weeks === 1 ? 'week' : 'weeks'} to go`;
 }
 
-export default function GoalList({ goals, entries, currency, onAdd, onRemove }) {
+export default function GoalList({
+  goals,
+  entries,
+  currency,
+  memberName,
+  syncStatus,
+  onAdd,
+  onRemove,
+  onMove,
+  onShare,
+  onUnshare,
+  onJoin,
+}) {
+  const [openShare, setOpenShare] = useState(null);
+  const [joining, setJoining] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joinError, setJoinError] = useState('');
+  const [copied, setCopied] = useState(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [hasTarget, setHasTarget] = useState(true);
@@ -93,7 +112,7 @@ export default function GoalList({ goals, entries, currency, onAdd, onRemove }) 
         </p>
       ) : null}
 
-      {goals.map((goal) => {
+      {sortGoals(goals).map((goal, index, list) => {
         const p = goalProgress(goal, entries);
         const line = planLine(goal, p, entries, currency);
         return (
@@ -101,7 +120,13 @@ export default function GoalList({ goals, entries, currency, onAdd, onRemove }) 
             <Jar ratio={p.ratio} emoji={goal.emoji} complete={p.complete} />
 
             <div className="goal-body">
-              <div className="goal-name">{goal.name}</div>
+              <div className="goal-name">
+                {goal.name}
+                {index === 0 ? <span className="goal-badge">Priority</span> : null}
+                {goal.share ? (
+                  <span className="goal-badge goal-badge-shared">Shared</span>
+                ) : null}
+              </div>
               <div className="goal-figure">
                 <strong>{formatMoney(p.saved, currency)}</strong>
                 {p.target > 0 ? ` of ${formatMoney(p.target, currency)}` : ' saved'}
@@ -117,15 +142,125 @@ export default function GoalList({ goals, entries, currency, onAdd, onRemove }) 
                 <div className="goal-pace">Open-ended</div>
               )}
 
-              <button type="button" className="link" onClick={() => onRemove(goal.id)}>
-                Remove
-              </button>
+              <div className="goal-actions">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label="Move up"
+                  disabled={index === 0}
+                  onClick={() => onMove(goal.id, 'up')}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label="Move down"
+                  disabled={index === list.length - 1}
+                  onClick={() => onMove(goal.id, 'down')}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => setOpenShare(openShare === goal.id ? null : goal.id)}
+                >
+                  {goal.share ? 'Sharing' : 'Share'}
+                </button>
+                <button type="button" className="link" onClick={() => onRemove(goal.id)}>
+                  Remove
+                </button>
+              </div>
+
+              {openShare === goal.id ? (
+                goal.share ? (
+                  <div className="share-panel">
+                    <button
+                      type="button"
+                      className="code-box"
+                      onClick={() => {
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(goal.share.code);
+                          setCopied(goal.id);
+                          setTimeout(() => setCopied(null), 1600);
+                        }
+                      }}
+                    >
+                      <span className="code-value">{formatCode(goal.share.code)}</span>
+                      <span className="code-hint">
+                        {copied === goal.id ? 'Copied' : 'Tap to copy'}
+                      </span>
+                    </button>
+                    <p className="hint">
+                      Only this goal is shared. Your other goals, the general pot and everything
+                      else stay on your phone. Anyone with the code can open this goal, so share it
+                      carefully.
+                    </p>
+                    <p className="sync-status">{syncStatus}</p>
+                    <button type="button" className="link" onClick={() => onUnshare(goal.id)}>
+                      Stop sharing
+                    </button>
+                  </div>
+                ) : (
+                  <div className="share-panel">
+                    <p className="hint">
+                      Share just this goal with someone. Only this goal and its entries leave your
+                      phone.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        onShare(goal.id, makeBookCode());
+                      }}
+                    >
+                      Create a share code
+                    </button>
+                  </div>
+                )
+              ) : null}
             </div>
           </article>
         );
       })}
 
-      {open ? (
+      {joining ? (
+        <div className="stack" style={{ marginTop: goals.length ? 18 : 0 }}>
+          <p className="hint">Enter the code someone shared with you.</p>
+          <input
+            className="control code-input"
+            type="text"
+            autoCapitalize="characters"
+            placeholder="ABCD EFGH 2345"
+            value={joinCode}
+            onChange={(e) => {
+              setJoinCode(e.target.value);
+              setJoinError('');
+            }}
+          />
+          {joinError ? <p className="error">{joinError}</p> : null}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              const code = normalizeCode(joinCode);
+              if (!code) {
+                setJoinError('That code does not look right.');
+                return;
+              }
+              onJoin(code);
+              setJoining(false);
+              setJoinCode('');
+            }}
+          >
+            Join goal
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setJoining(false)}>
+            Cancel
+          </button>
+        </div>
+      ) : open ? (
         <div className="stack" style={{ marginTop: goals.length ? 18 : 0 }}>
           <div>
             <label className="field-label" htmlFor="goal-name">
@@ -237,14 +372,14 @@ export default function GoalList({ goals, entries, currency, onAdd, onRemove }) 
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          className="btn btn-ghost"
-          style={{ marginTop: goals.length ? 18 : 0 }}
-          onClick={() => setOpen(true)}
-        >
-          New goal
-        </button>
+        <div className="stack" style={{ marginTop: goals.length ? 18 : 0 }}>
+          <button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
+            New goal
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setJoining(true)}>
+            Join a shared goal
+          </button>
+        </div>
       )}
     </section>
   );

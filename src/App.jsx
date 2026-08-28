@@ -3,15 +3,28 @@ import Masthead from './components/Masthead.jsx';
 import EntryForm from './components/EntryForm.jsx';
 import GoalList from './components/GoalList.jsx';
 import Ledger from './components/Ledger.jsx';
-import SharedBook from './components/SharedBook.jsx';
+import MemberCard from './components/MemberCard.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
-import { mergeState, markDeleted, shareable } from './lib/sync.js';
+import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
+import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
 const BURST_MS = 1050;
 const SYNC_DEBOUNCE_MS = 1200;
+
+function statusText(status, lastSync) {
+  if (status === 'syncing') return 'Syncing…';
+  if (status === 'error') return 'Offline — will retry';
+  if (lastSync) {
+    return `Last synced ${lastSync.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+  }
+  return 'Not synced yet';
+}
 
 export default function App() {
   const [state, setState] = useState(() => loadState());
@@ -34,20 +47,29 @@ export default function App() {
     clearTimeout(syncTimer.current);
   }, []);
 
-  const code = state.book?.code ?? null;
+  const sharedCodes = state.goals
+    .filter((g) => g.share?.code)
+    .map((g) => `${g.id}:${g.share.code}`)
+    .join(',');
 
   const sync = useCallback(async () => {
-    if (!code || !isRemoteConfigured() || inFlight.current) return;
+    if (!isRemoteConfigured() || inFlight.current) return;
+    const shared = stateRef.current.goals.filter((g) => g.share?.code);
+    if (shared.length === 0) return;
+
     inFlight.current = true;
     setStatus('syncing');
     try {
-      const remote = await readBook(code);
-      // Birleştirmeyi burada yapıyoruz: setState güncelleyicisi sonradan
-      // çalıştığı için sonucu oradan okumak güvenilir değil.
-      const merged = mergeState(stateRef.current, remote);
-      stateRef.current = merged;
-      setState(merged);
-      await writeBook(code, shareable(merged));
+      for (const goal of shared) {
+        const code = goal.share.code;
+        const remote = await readBook(code);
+        // Birleştirmeyi burada yapıyoruz: setState güncelleyicisi sonradan
+        // çalıştığı için sonucu oradan okumak güvenilir değil.
+        const merged = mergeGoalBook(stateRef.current, remote, goal.id);
+        stateRef.current = merged;
+        setState(merged);
+        await writeBook(code, shareableGoal(merged, goal.id));
+      }
       setStatus('idle');
       setLastSync(new Date());
     } catch {
@@ -55,22 +77,21 @@ export default function App() {
     } finally {
       inFlight.current = false;
     }
-  }, [code]);
+  }, []);
 
-  // Değişiklikten kısa süre sonra ve sekmeye dönünce eşitle.
   useEffect(() => {
-    if (!code) return undefined;
+    if (!sharedCodes) return undefined;
     clearTimeout(syncTimer.current);
     syncTimer.current = setTimeout(sync, SYNC_DEBOUNCE_MS);
     return () => clearTimeout(syncTimer.current);
-  }, [code, sync, state.entries, state.goals, state.currency, state.deleted]);
+  }, [sharedCodes, sync, state.entries, state.goals]);
 
   useEffect(() => {
-    if (!code) return undefined;
+    if (!sharedCodes) return undefined;
     const onFocus = () => sync();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, [code, sync]);
+  }, [sharedCodes, sync]);
 
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
@@ -100,20 +121,82 @@ export default function App() {
     }));
   }
 
+  function reassignEntry(id, goalId) {
+    setState((prev) => ({
+      ...prev,
+      entries: prev.entries.map((e) => (e.id === id ? { ...e, goalId } : e)),
+    }));
+  }
+
   function addGoal({ name, target, emoji, plan }) {
     const now = new Date().toISOString();
-    const goal = { id: makeId('g'), name, target, emoji, plan: plan ?? null, createdAt: now, updatedAt: now };
-    setState((prev) => ({ ...prev, goals: [...prev.goals, goal] }));
+    const goal = {
+      id: makeId('g'),
+      name,
+      target,
+      emoji,
+      plan: plan ?? null,
+      share: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setState((prev) => ({ ...prev, goals: normalizeOrders([...prev.goals, goal]) }));
   }
 
   function removeGoal(id) {
     setState((prev) => ({
       ...prev,
-      goals: prev.goals.filter((g) => g.id !== id),
+      goals: normalizeOrders(prev.goals.filter((g) => g.id !== id)),
       entries: prev.entries.map((e) => (e.goalId === id ? { ...e, goalId: null } : e)),
       deleted: markDeleted(prev.deleted, 'goals', id),
     }));
   }
+
+  function reorderGoal(id, direction) {
+    setState((prev) => ({ ...prev, goals: moveGoal(prev.goals, id, direction) }));
+  }
+
+  function shareGoal(id, code) {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.map((g) => (g.id === id ? { ...g, share: { code } } : g)),
+    }));
+  }
+
+  function unshareGoal(id) {
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.map((g) => (g.id === id ? { ...g, share: null } : g)),
+    }));
+  }
+
+  async function joinGoal(code) {
+    setStatus('syncing');
+    try {
+      const remote = await readBook(code);
+      if (!remote || !remote.goal) {
+        setStatus('error');
+        return;
+      }
+      const goalId = remote.goal.id;
+      const merged = mergeGoalBook(stateRef.current, remote, goalId);
+      const withShare = {
+        ...merged,
+        goals: normalizeOrders(
+          merged.goals.map((g) => (g.id === goalId ? { ...g, share: { code } } : g))
+        ),
+      };
+      stateRef.current = withShare;
+      setState(withShare);
+      await writeBook(code, shareableGoal(withShare, goalId));
+      setStatus('idle');
+      setLastSync(new Date());
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  const sharedCount = state.goals.filter((g) => g.share?.code).length;
 
   return (
     <div className="app">
@@ -139,14 +222,25 @@ export default function App() {
         </div>
       </section>
 
-      <EntryForm currency={state.currency} goals={state.goals} onAdd={addEntry} />
+      <EntryForm
+        currency={state.currency}
+        goals={state.goals}
+        entries={state.entries}
+        onAdd={addEntry}
+      />
 
       <GoalList
         goals={state.goals}
         entries={state.entries}
         currency={state.currency}
+        memberName={state.member?.name}
+        syncStatus={statusText(status, lastSync)}
         onAdd={addGoal}
         onRemove={removeGoal}
+        onMove={reorderGoal}
+        onShare={shareGoal}
+        onUnshare={unshareGoal}
+        onJoin={joinGoal}
       />
 
       <Ledger
@@ -155,23 +249,23 @@ export default function App() {
         currency={state.currency}
         lastId={burst?.id}
         onRemove={removeEntry}
+        onReassign={reassignEntry}
       />
 
-      <SharedBook
+      <MemberCard
         member={state.member}
-        book={state.book}
-        status={status}
-        lastSync={lastSync}
         onSetName={(name) =>
-          setState((prev) => ({ ...prev, member: { id: makeId('m'), name } }))
+          setState((prev) => ({
+            ...prev,
+            member: { id: prev.member?.id ?? makeId('m'), name },
+          }))
         }
-        onJoin={(bookCode) => setState((prev) => ({ ...prev, book: { code: bookCode } }))}
-        onLeave={() => setState((prev) => ({ ...prev, book: null }))}
-        onSyncNow={sync}
       />
 
       <p className="footnote">
-        {state.book ? 'Shared book · synced' : 'Saved on this device only'}
+        {sharedCount > 0
+          ? `${sharedCount} shared ${sharedCount === 1 ? 'goal' : 'goals'} · everything else stays on this device`
+          : 'Saved on this device only'}
       </p>
 
       {burst ? (
