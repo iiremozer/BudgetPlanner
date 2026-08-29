@@ -28,10 +28,10 @@ describe('uygulama açılışı', () => {
     expect(screen.getAllByText('£0.00').length).toBeGreaterThan(0);
   });
 
-  it('kayıt sekmesi açılışta görünür', () => {
+  it('kayıt sekmesi açılışta görünür ve sadece işleme odaklanır', () => {
     render(<App />);
     expect(screen.getByText('What did you skip?')).toBeTruthy();
-    expect(screen.getByText('Recent wins')).toBeTruthy();
+    expect(screen.queryByText('Recent wins')).toBeNull();
   });
 
   it('hedefler sekmesine geçilir', () => {
@@ -41,11 +41,12 @@ describe('uygulama açılışı', () => {
     expect(screen.getAllByText('Everyday pot').length).toBeGreaterThan(0);
   });
 
-  it('seri sekmesine geçilir', () => {
+  it('geçmiş sekmesinde seri ve kayıtlar birlikte durur', () => {
     render(<App />);
-    fireEvent.click(screen.getByText('Streak'));
+    fireEvent.click(screen.getByText('History'));
     expect(screen.getByText('Current streak')).toBeTruthy();
     expect(screen.getByText('This week')).toBeTruthy();
+    expect(screen.getByText('Recent wins')).toBeTruthy();
     expect(screen.getByText('Numbers')).toBeTruthy();
   });
 
@@ -79,9 +80,12 @@ describe('uygulama açılışı', () => {
     );
 
     render(<App />);
-    // Kayıt sekmesi: toplam ve kaydın kendisi.
+    // Kayıt sekmesi: toplam görünür.
     expect(screen.getAllByText(/£26\.00/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Coffee').length).toBeGreaterThan(1);
+
+    // Geçmiş sekmesi: kaydın kendisi.
+    fireEvent.click(screen.getByText('History'));
+    expect(screen.getAllByText('Coffee').length).toBeGreaterThan(0);
 
     // Hedefler sekmesi: hedef ve ilerlemesi.
     fireEvent.click(screen.getByText('Goals'));

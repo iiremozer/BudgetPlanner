@@ -1,7 +1,7 @@
 const TABS = [
   { id: 'save', label: 'Save' },
   { id: 'goals', label: 'Goals' },
-  { id: 'streak', label: 'Streak' },
+  { id: 'history', label: 'History' },
 ];
 
 export default function TabBar({ active, onChange, badge }) {
@@ -16,7 +16,7 @@ export default function TabBar({ active, onChange, badge }) {
           onClick={() => onChange(tab.id)}
         >
           <span className="tab-label">{tab.label}</span>
-          {tab.id === 'streak' && badge > 0 ? <span className="tab-badge">{badge}</span> : null}
+          {tab.id === 'history' && badge > 0 ? <span className="tab-badge">{badge}</span> : null}
         </button>
       ))}
     </nav>

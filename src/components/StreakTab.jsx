@@ -5,7 +5,7 @@ import { formatDayLabel } from '../lib/dates.js';
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export default function StreakTab({ entries, currency }) {
+export default function StreakTab({ entries, currency, children }) {
   const streak = currentStreak(entries);
   const best = longestStreak(entries);
   const week = last7Days(entries);
@@ -48,6 +48,8 @@ export default function StreakTab({ entries, currency }) {
             : 'Log a win today to start a streak.'}
         </p>
       </section>
+
+      {children}
 
       <section className="card">
         <div className="card-head">

@@ -45,6 +45,7 @@ export default function App() {
   const [lastSync, setLastSync] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [tab, setTab] = useState('save');
+  const [justAdded, setJustAdded] = useState(null);
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
@@ -151,6 +152,7 @@ export default function App() {
     dirty.current = true;
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
     setBurst(entry);
+    setJustAdded(entry);
     if (navigator.vibrate) navigator.vibrate(18);
     clearTimeout(burstTimer.current);
     burstTimer.current = setTimeout(() => setBurst(null), BURST_MS);
@@ -303,15 +305,23 @@ export default function App() {
             onAdd={addEntry}
           />
 
-          <Ledger
-            entries={state.entries}
-            goals={state.goals}
-            currency={state.currency}
-            generalName={state.generalName}
-            lastId={burst?.id}
-            onRemove={removeEntry}
-            onReassign={reassignEntry}
-          />
+          {justAdded ? (
+            <div className="just-added">
+              <span className="just-added-text">
+                Added {justAdded.note || 'a win'} · {formatMoney(justAdded.amount, state.currency)}
+              </span>
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  removeEntry(justAdded.id);
+                  setJustAdded(null);
+                }}
+              >
+                Undo
+              </button>
+            </div>
+          ) : null}
         </>
       ) : null}
 
@@ -348,8 +358,18 @@ export default function App() {
         </>
       ) : null}
 
-      {tab === 'streak' ? (
-        <StreakTab entries={state.entries} currency={state.currency} />
+      {tab === 'history' ? (
+        <StreakTab entries={state.entries} currency={state.currency}>
+          <Ledger
+            entries={state.entries}
+            goals={state.goals}
+            currency={state.currency}
+            generalName={state.generalName}
+            lastId={burst?.id}
+            onRemove={removeEntry}
+            onReassign={reassignEntry}
+          />
+        </StreakTab>
       ) : null}
 
       <p className="footnote">
