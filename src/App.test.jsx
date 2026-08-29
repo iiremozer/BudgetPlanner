@@ -4,7 +4,7 @@
 // çizim sırasında patlayan bir bileşen buradan geçemez — derleyici bu tür
 // hataları yakalamıyor.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import App from './App.jsx';
 
 beforeEach(() => {
@@ -28,11 +28,25 @@ describe('uygulama açılışı', () => {
     expect(screen.getAllByText('£0.00').length).toBeGreaterThan(0);
   });
 
-  it('ana bölümlerin hepsi görünür', () => {
+  it('kayıt sekmesi açılışta görünür', () => {
     render(<App />);
-    for (const title of ['What did you skip?', 'Goals', 'Recent wins', 'Your name']) {
-      expect(screen.getByText(title)).toBeTruthy();
-    }
+    expect(screen.getByText('What did you skip?')).toBeTruthy();
+    expect(screen.getByText('Recent wins')).toBeTruthy();
+  });
+
+  it('hedefler sekmesine geçilir', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getByText('Your name')).toBeTruthy();
+    expect(screen.getAllByText('Everyday pot').length).toBeGreaterThan(0);
+  });
+
+  it('seri sekmesine geçilir', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Streak'));
+    expect(screen.getByText('Current streak')).toBeTruthy();
+    expect(screen.getByText('This week')).toBeTruthy();
+    expect(screen.getByText('Numbers')).toBeTruthy();
   });
 
   it('kayıtlı defterle açılır', () => {
@@ -65,10 +79,13 @@ describe('uygulama açılışı', () => {
     );
 
     render(<App />);
-    expect(screen.getAllByText('Japan').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Coffee').length).toBeGreaterThan(1);
-    // Toplam, hedefin birikeni ve kayıt satırı — üçünde de aynı tutar görünür.
+    // Kayıt sekmesi: toplam ve kaydın kendisi.
     expect(screen.getAllByText(/£26\.00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Coffee').length).toBeGreaterThan(1);
+
+    // Hedefler sekmesi: hedef ve ilerlemesi.
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getAllByText('Japan').length).toBeGreaterThan(0);
     expect(screen.getByText(/of £3,000\.00/)).toBeTruthy();
   });
 
@@ -80,8 +97,9 @@ describe('uygulama açılışı', () => {
 });
 
 describe('genel kavanoz', () => {
-  it('hedefler arasında varsayılan adıyla görünür', () => {
+  it('hedefler sekmesinde varsayılan adıyla görünür', () => {
     render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
     expect(screen.getAllByText('Everyday pot').length).toBeGreaterThan(0);
   });
 
@@ -99,6 +117,7 @@ describe('genel kavanoz', () => {
       })
     );
     render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
     expect(screen.getAllByText('Günlük kasa').length).toBeGreaterThan(0);
     expect(screen.getByText(/Next milestone/)).toBeTruthy();
   });
@@ -118,6 +137,7 @@ describe('renkler', () => {
       })
     );
     const { container } = render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
     const tinted = container.querySelectorAll('.goal-tinted');
     // iki hedef artı genel kavanoz
     expect(tinted.length).toBe(3);

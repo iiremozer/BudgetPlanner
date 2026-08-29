@@ -7,8 +7,6 @@ import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRat
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
 import Jar from './Jar.jsx';
-import Icon from './Icon.jsx';
-import { iconForEmoji } from '../lib/icons.js';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
 
@@ -141,7 +139,7 @@ export default function GoalList({
           >
             <Jar
               ratio={p.ratio}
-              iconName={iconForEmoji(goal.emoji)}
+              emoji={goal.emoji}
               complete={p.complete}
               id={goal.id}
               color={tone}
@@ -276,7 +274,7 @@ export default function GoalList({
             className={`goal goal-tinted${goals.length ? ' goal-general' : ''}`}
             style={{ '--tone': SLATE.base, '--tone-tint': SLATE.tint }}
           >
-            <Jar ratio={p.ratio} iconName="coins" id="general" color={SLATE} />
+            <Jar ratio={p.ratio} emoji="💰" id="general" color={SLATE} />
 
             <div className="goal-body">
               {renaming ? (
@@ -497,15 +495,14 @@ export default function GoalList({
                 <button
                   key={e}
                   type="button"
-                  className="chip chip-icon"
-                  aria-label={e}
+                  className="chip"
                   aria-pressed={emoji === e}
                   onClick={() => {
                     setEmoji(e);
                     setColor(colorForEmoji(e));
                   }}
                 >
-                  <Icon name={iconForEmoji(e)} size={20} />
+                  {e}
                 </button>
               ))}
             </div>

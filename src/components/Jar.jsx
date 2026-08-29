@@ -1,5 +1,4 @@
 import { colorOf } from '../lib/colors.js';
-import Icon from './Icon.jsx';
 
 // Kavanozun gerçekçi görünmesi omuz eğrisinden geliyor: boyun dar başlar,
 // aşağı doğru genişleyip gövdeye açılır. Üstüne cam için yumuşak bir
@@ -20,7 +19,7 @@ const BODY = `M 34 24
 const TOP = 24;
 const BOTTOM = 118;
 
-export default function Jar({ ratio = 0, emoji, iconName, complete = false, size = 68, id = 'jar', color }) {
+export default function Jar({ ratio = 0, emoji, complete = false, size = 68, id = 'jar', color }) {
   const clamped = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
   const level = BOTTOM - clamped * (BOTTOM - TOP - 6);
   const filled = clamped > 0.005;
@@ -129,9 +128,9 @@ export default function Jar({ ratio = 0, emoji, iconName, complete = false, size
         <path d={BODY} fill="none" stroke="#b6b0a2" strokeWidth="1.3" opacity="0.85" />
       </svg>
 
-      {iconName || emoji ? (
-        <span className="jar-icon" style={{ color: filled && clamped > 0.35 ? '#ffffff' : tone.dark }}>
-          <Icon name={iconName} size={Math.round(size * 0.36)} strokeWidth={1.9} />
+      {emoji ? (
+        <span className="jar-emoji" aria-hidden="true">
+          {emoji}
         </span>
       ) : null}
     </div>

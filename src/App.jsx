@@ -4,6 +4,8 @@ import EntryForm from './components/EntryForm.jsx';
 import GoalList from './components/GoalList.jsx';
 import Ledger from './components/Ledger.jsx';
 import MemberCard from './components/MemberCard.jsx';
+import StreakTab from './components/StreakTab.jsx';
+import TabBar from './components/TabBar.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
@@ -42,6 +44,7 @@ export default function App() {
   const [status, setStatus] = useState('idle');
   const [lastSync, setLastSync] = useState(null);
   const [pullDistance, setPullDistance] = useState(0);
+  const [tab, setTab] = useState('save');
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
@@ -275,76 +278,87 @@ export default function App() {
         }
       />
 
-      <section className="hero">
-        <p className="hero-label">Total saved</p>
-        <p className={`hero-amount${burst ? ' is-bumped' : ''}`}>
-          {formatMoney(total, state.currency)}
-        </p>
-        <div className="hero-meta">
-          <span className={`pill${streak > 0 ? ' pill-live' : ''}`}>
-            {streak > 0 ? `${streak} day streak` : 'No streak yet'}
-          </span>
-          <span className="pill">
-            {state.entries.length} {state.entries.length === 1 ? 'win' : 'wins'}
-          </span>
-        </div>
-      </section>
+      {tab === 'save' ? (
+        <>
+          <section className="hero">
+            <p className="hero-label">Total saved</p>
+            <p className={`hero-amount${burst ? ' is-bumped' : ''}`}>
+              {formatMoney(total, state.currency)}
+            </p>
+            <div className="hero-meta">
+              <span className={`pill${streak > 0 ? ' pill-live' : ''}`}>
+                {streak > 0 ? `${streak} day streak` : 'No streak yet'}
+              </span>
+              <span className="pill">
+                {state.entries.length} {state.entries.length === 1 ? 'win' : 'wins'}
+              </span>
+            </div>
+          </section>
 
-      <EntryForm
-        currency={state.currency}
-        goals={state.goals}
-        entries={state.entries}
-        generalName={state.generalName}
-        onAdd={addEntry}
-      />
+          <EntryForm
+            currency={state.currency}
+            goals={state.goals}
+            entries={state.entries}
+            generalName={state.generalName}
+            onAdd={addEntry}
+          />
 
-      <GoalList
-        goals={state.goals}
-        entries={state.entries}
-        currency={state.currency}
-        memberName={state.member?.name}
-        syncStatus={statusText(status, lastSync)}
-        onSyncNow={sync}
-        generalName={state.generalName}
-        onRenameGeneral={(name) =>
-          setState((prev) => ({
-            ...prev,
-            generalName: name.trim() || prev.generalName,
-          }))
-        }
-        onAdd={addGoal}
-        onRemove={removeGoal}
-        onMove={reorderGoal}
-        onShare={shareGoal}
-        onUnshare={unshareGoal}
-        onJoin={joinGoal}
-      />
+          <Ledger
+            entries={state.entries}
+            goals={state.goals}
+            currency={state.currency}
+            generalName={state.generalName}
+            lastId={burst?.id}
+            onRemove={removeEntry}
+            onReassign={reassignEntry}
+          />
+        </>
+      ) : null}
 
-      <Ledger
-        entries={state.entries}
-        goals={state.goals}
-        currency={state.currency}
-        generalName={state.generalName}
-        lastId={burst?.id}
-        onRemove={removeEntry}
-        onReassign={reassignEntry}
-      />
+      {tab === 'goals' ? (
+        <>
+          <GoalList
+            goals={state.goals}
+            entries={state.entries}
+            currency={state.currency}
+            memberName={state.member?.name}
+            syncStatus={statusText(status, lastSync)}
+            onAdd={addGoal}
+            onRemove={removeGoal}
+            onMove={reorderGoal}
+            onShare={shareGoal}
+            onUnshare={unshareGoal}
+            onJoin={joinGoal}
+            onSyncNow={sync}
+            generalName={state.generalName}
+            onRenameGeneral={(name) =>
+              setState((prev) => ({ ...prev, generalName: name.trim() || prev.generalName }))
+            }
+          />
 
-      <MemberCard
-        member={state.member}
-        onSetName={(name) =>
-          setState((prev) => ({
-            ...prev,
-            member: { id: prev.member?.id ?? makeId('m'), name },
-          }))
-        }
-      />
+          <MemberCard
+            member={state.member}
+            onSetName={(name) =>
+              setState((prev) => ({
+                ...prev,
+                member: { id: prev.member?.id ?? makeId('m'), name },
+              }))
+            }
+          />
+        </>
+      ) : null}
+
+      {tab === 'streak' ? (
+        <StreakTab entries={state.entries} currency={state.currency} />
+      ) : null}
 
       <p className="footnote">
         {sharedCount > 0
           ? `${sharedCount} shared ${sharedCount === 1 ? 'goal' : 'goals'} · everything else stays on this device`
           : 'Saved on this device only'}
       </p>
+
+      <TabBar active={tab} onChange={setTab} badge={streak} />
 
       {burst ? (
         <div className="burst" aria-hidden="true">
