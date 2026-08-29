@@ -1007,3 +1007,30 @@ select {
   color: var(--mint);
   padding: 0;
 }
+
+.gear {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px;
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+}

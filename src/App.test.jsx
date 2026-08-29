@@ -37,8 +37,8 @@ describe('uygulama açılışı', () => {
   it('hedefler sekmesine geçilir', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    expect(screen.getByText('Your name')).toBeTruthy();
     expect(screen.getAllByText('Everyday pot').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Your name')).toBeNull();
   });
 
   it('geçmiş sekmesinde seri ve kayıtlar birlikte durur', () => {
@@ -147,5 +147,35 @@ describe('renkler', () => {
     expect(tinted.length).toBe(3);
     const tones = [...tinted].map((el) => el.style.getPropertyValue('--tone'));
     expect(new Set(tones).size).toBe(3);
+  });
+});
+
+describe('ayarlar', () => {
+  it('dişli düğmesiyle açılıp kapanır', () => {
+    render(<App />);
+    expect(screen.queryByText('Settings')).toBeNull();
+
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Settings')).toBeTruthy();
+    expect(screen.getByText('Your name')).toBeTruthy();
+    expect(screen.getByText('Currency')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Done'));
+    expect(screen.queryByText('Settings')).toBeNull();
+    expect(screen.getByText('What did you skip?')).toBeTruthy();
+  });
+
+  it('ayarlar açıkken sekme çubuğu gizlenir', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.queryByText('History')).toBeNull();
+  });
+
+  it('isim kaydedilir', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.change(screen.getByPlaceholderText('Your name'), { target: { value: 'İrem' } });
+    fireEvent.click(screen.getByText('Save name'));
+    expect(screen.getByText('Saved')).toBeTruthy();
   });
 });

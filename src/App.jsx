@@ -3,7 +3,7 @@ import Masthead from './components/Masthead.jsx';
 import EntryForm from './components/EntryForm.jsx';
 import GoalList from './components/GoalList.jsx';
 import Ledger from './components/Ledger.jsx';
-import MemberCard from './components/MemberCard.jsx';
+import Settings from './components/Settings.jsx';
 import StreakTab from './components/StreakTab.jsx';
 import TabBar from './components/TabBar.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
@@ -46,6 +46,7 @@ export default function App() {
   const [pullDistance, setPullDistance] = useState(0);
   const [tab, setTab] = useState('save');
   const [justAdded, setJustAdded] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
@@ -273,12 +274,25 @@ export default function App() {
         </div>
       ) : null}
 
-      <Masthead
-        currency={state.currency}
-        onCurrencyChange={(currency) =>
-          setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
-        }
-      />
+      <Masthead onOpenSettings={() => setSettingsOpen(true)} />
+
+      {settingsOpen ? (
+        <Settings
+          member={state.member}
+          currency={state.currency}
+          onSetName={(name) =>
+            setState((prev) => ({
+              ...prev,
+              member: { id: prev.member?.id ?? makeId('m'), name },
+            }))
+          }
+          onCurrencyChange={(currency) =>
+            setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
+          }
+          onClose={() => setSettingsOpen(false)}
+        />
+      ) : (
+        <>
 
       {tab === 'save' ? (
         <>
@@ -346,15 +360,6 @@ export default function App() {
             }
           />
 
-          <MemberCard
-            member={state.member}
-            onSetName={(name) =>
-              setState((prev) => ({
-                ...prev,
-                member: { id: prev.member?.id ?? makeId('m'), name },
-              }))
-            }
-          />
         </>
       ) : null}
 
@@ -378,7 +383,10 @@ export default function App() {
           : 'Saved on this device only'}
       </p>
 
-      <TabBar active={tab} onChange={setTab} badge={streak} />
+        </>
+      )}
+
+      {settingsOpen ? null : <TabBar active={tab} onChange={setTab} badge={streak} />}
 
       {burst ? (
         <div className="burst" aria-hidden="true">
