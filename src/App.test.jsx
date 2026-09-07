@@ -212,3 +212,48 @@ describe('yedekleme', () => {
     document.createElement.mockRestore();
   });
 });
+
+describe('gerçek aktarım', () => {
+  function seed(entryDate) {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        goals: [],
+        entries: [{ id: 'e1', amount: 2600, goalId: null, at: entryDate, note: 'Coffee' }],
+        transfers: [],
+      })
+    );
+  }
+
+  it('bekleyen tutar geçmiş sekmesinde görünür', () => {
+    seed(new Date().toISOString());
+    render(<App />);
+    fireEvent.click(screen.getByText('History'));
+    expect(screen.getByText('Not in the bank yet')).toBeTruthy();
+    expect(screen.getAllByText('£26.00').length).toBeGreaterThan(0);
+  });
+
+  it('yeni kayıtta kayıt sekmesini rahatsız etmez', () => {
+    seed(new Date().toISOString());
+    render(<App />);
+    expect(screen.queryByText('Not in the bank yet')).toBeNull();
+  });
+
+  it('bir haftayı geçince kayıt sekmesinde hatırlatır', () => {
+    const old = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    seed(old);
+    render(<App />);
+    expect(screen.getByText('Not in the bank yet')).toBeTruthy();
+  });
+
+  it('aktarımı onaylayınca bekleyen kalmaz', () => {
+    const old = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    seed(old);
+    render(<App />);
+    fireEvent.click(screen.getByText('I moved all £26.00'));
+    expect(screen.queryByText('Not in the bank yet')).toBeNull();
+    fireEvent.click(screen.getByText('History'));
+    expect(screen.getByText(/is in the bank/)).toBeTruthy();
+  });
+});

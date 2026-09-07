@@ -1044,3 +1044,32 @@ select {
   border: 1px solid var(--line);
   border-radius: 12px;
 }
+
+.transfer-due {
+  border-color: rgba(224, 164, 46, 0.5);
+  background: linear-gradient(180deg, #fffaf0, #ffffff 60%);
+}
+
+.transfer-amount {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--honey);
+}
+
+.transfer-due .transfer-amount {
+  color: #b8811a;
+}
+
+.transfer-clear {
+  background: rgba(47, 143, 111, 0.08);
+  border-color: rgba(47, 143, 111, 0.22);
+}
+
+.transfer-clear-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mint);
+  font-weight: 500;
+}

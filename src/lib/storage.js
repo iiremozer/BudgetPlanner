@@ -21,8 +21,19 @@ export function defaultState() {
     goals: [],
     entries: [],
     deleted: emptyDeleted(),
+    transfers: [],
     member: null,
   };
+}
+
+/** Gerçekten birikim hesabına aktarıldığı onaylanan tutarlar. */
+function cleanTransfer(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = typeof raw.id === 'string' && raw.id ? raw.id : null;
+  const amount = Number.isFinite(raw.amount) ? Math.round(raw.amount) : null;
+  const at = typeof raw.at === 'string' && !Number.isNaN(new Date(raw.at).getTime()) ? raw.at : null;
+  if (!id || amount === null || amount <= 0 || !at) return null;
+  return { id, amount, at };
 }
 
 /** Bu cihazın defterdeki kimliği. Ad ortak deftere yazılır, kimlik cihazda kalır. */
@@ -125,6 +136,9 @@ export function normalizeState(raw) {
     goals,
     entries,
     deleted,
+    transfers: Array.isArray(raw.transfers)
+      ? raw.transfers.map(cleanTransfer).filter(Boolean)
+      : [],
     member: cleanMember(raw.member),
   };
 }

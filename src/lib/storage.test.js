@@ -246,3 +246,24 @@ describe('hedef rengi', () => {
     expect(s.goals[0].color).toBe('coral');
   });
 });
+
+describe('aktarımlar', () => {
+  const t1 = { id: 't1', amount: 2600, at: '2026-01-05T10:00:00.000Z' };
+
+  it('geçerli aktarımı korur', () => {
+    expect(normalizeState({ transfers: [t1] }).transfers).toEqual([t1]);
+  });
+
+  it('sıfır veya eksi tutarı atar', () => {
+    const s = normalizeState({ transfers: [{ ...t1, amount: 0 }, { ...t1, id: 't2', amount: -5 }] });
+    expect(s.transfers).toEqual([]);
+  });
+
+  it('tarihsiz aktarımı atar', () => {
+    expect(normalizeState({ transfers: [{ ...t1, at: 'bir ara' }] }).transfers).toEqual([]);
+  });
+
+  it('liste değilse boşaltır', () => {
+    expect(normalizeState({ transfers: 'çöp' }).transfers).toEqual([]);
+  });
+});

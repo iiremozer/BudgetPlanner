@@ -5,12 +5,14 @@ import GoalList from './components/GoalList.jsx';
 import Ledger from './components/Ledger.jsx';
 import Settings from './components/Settings.jsx';
 import StreakTab from './components/StreakTab.jsx';
+import TransferCard from './components/TransferCard.jsx';
 import TabBar from './components/TabBar.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
 import { mergeBackup, replaceWithBackup } from './lib/backup.js';
+import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -140,6 +142,14 @@ export default function App() {
 
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
+  const pending = useMemo(
+    () => pendingAmount(state.entries, state.transfers),
+    [state.entries, state.transfers]
+  );
+  const prompting = useMemo(
+    () => shouldPrompt(state.entries, state.transfers),
+    [state.entries, state.transfers]
+  );
 
   function addEntry({ amount, note, goalId, emoji }) {
     const entry = {
@@ -158,6 +168,17 @@ export default function App() {
     if (navigator.vibrate) navigator.vibrate(18);
     clearTimeout(burstTimer.current);
     burstTimer.current = setTimeout(() => setBurst(null), BURST_MS);
+  }
+
+  function confirmTransfer(amount) {
+    dirty.current = true;
+    setState((prev) => ({
+      ...prev,
+      transfers: [
+        ...prev.transfers,
+        { id: makeId('t'), amount, at: new Date().toISOString() },
+      ],
+    }));
   }
 
   function removeEntry(id) {
@@ -316,8 +337,21 @@ export default function App() {
               <span className="pill">
                 {state.entries.length} {state.entries.length === 1 ? 'win' : 'wins'}
               </span>
+              {pending > 0 ? (
+                <span className="pill">{formatMoney(pending, state.currency)} to move</span>
+              ) : null}
             </div>
           </section>
+
+          {prompting ? (
+            <TransferCard
+              entries={state.entries}
+              transfers={state.transfers}
+              currency={state.currency}
+              prompting
+              onConfirm={confirmTransfer}
+            />
+          ) : null}
 
           <EntryForm
             currency={state.currency}
@@ -373,6 +407,13 @@ export default function App() {
 
       {tab === 'history' ? (
         <StreakTab entries={state.entries} currency={state.currency}>
+          <TransferCard
+            entries={state.entries}
+            transfers={state.transfers}
+            currency={state.currency}
+            onConfirm={confirmTransfer}
+          />
+
           <Ledger
             entries={state.entries}
             goals={state.goals}
