@@ -179,3 +179,36 @@ describe('ayarlar', () => {
     expect(screen.getByText('Saved')).toBeTruthy();
   });
 });
+
+describe('yedekleme', () => {
+  it('ayarlarda yedekleme bölümü vardır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Backup')).toBeTruthy();
+    expect(screen.getByText('Save a copy')).toBeTruthy();
+    expect(screen.getByText('Restore from a file')).toBeTruthy();
+  });
+
+  it('kopya kaydetmek indirme başlatır', () => {
+    const click = vi.fn();
+    const realCreate = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      const el = realCreate(tag);
+      if (tag === 'a') el.click = click;
+      return el;
+    });
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: vi.fn(() => 'blob:test'),
+      revokeObjectURL: vi.fn(),
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Save a copy'));
+
+    expect(click).toHaveBeenCalled();
+    expect(screen.getByText(/Saved 0 wins/)).toBeTruthy();
+    document.createElement.mockRestore();
+  });
+});

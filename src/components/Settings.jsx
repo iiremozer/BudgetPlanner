@@ -1,9 +1,52 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CURRENCIES, CURRENCY_CODES } from '../lib/money.js';
+import { toBackup, fromBackup, backupFilename } from '../lib/backup.js';
 
-export default function Settings({ member, currency, onSetName, onCurrencyChange, onClose }) {
+export default function Settings({
+  member,
+  currency,
+  state,
+  onSetName,
+  onCurrencyChange,
+  onRestore,
+  onClose,
+}) {
   const [name, setName] = useState(member?.name ?? '');
   const [saved, setSaved] = useState(false);
+  const [pending, setPending] = useState(null);
+  const [message, setMessage] = useState('');
+  const fileInput = useRef(null);
+
+  function exportBackup() {
+    const payload = toBackup(state);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = backupFilename();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setMessage(`Saved ${payload.counts.entries} wins and ${payload.counts.goals} goals.`);
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const restored = fromBackup(String(reader.result));
+      if (!restored) {
+        setMessage('That file is not a savings book backup.');
+        setPending(null);
+        return;
+      }
+      setPending(restored);
+      setMessage('');
+    };
+    reader.onerror = () => setMessage('Could not read that file.');
+    reader.readAsText(file);
+  }
 
   return (
     <>
@@ -69,6 +112,73 @@ export default function Settings({ member, currency, onSetName, onCurrencyChange
         <p className="hint" style={{ marginTop: 12 }}>
           Changing this relabels existing amounts. It does not convert them.
         </p>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Backup</h3>
+        </div>
+        <div className="stack">
+          <p className="hint">
+            Your book lives on this phone. If you clear your browser or leave the app unused for a
+            while, iOS can delete it. Save a copy somewhere safe now and then.
+          </p>
+
+          <button type="button" className="btn" onClick={exportBackup}>
+            Save a copy
+          </button>
+
+          <input
+            ref={fileInput}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              readFile(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+
+          {pending ? (
+            <div className="restore-panel">
+              <p className="hint">
+                That file has {pending.entries.length} wins and {pending.goals.length} goals. Add
+                them to what you already have, or start over from the file?
+              </p>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  onRestore(pending, 'merge');
+                  setPending(null);
+                  setMessage('Restored and merged.');
+                }}
+              >
+                Add to my book
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  onRestore(pending, 'replace');
+                  setPending(null);
+                  setMessage('Book replaced with the file.');
+                }}
+              >
+                Replace my book
+              </button>
+              <button type="button" className="link" onClick={() => setPending(null)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={() => fileInput.current?.click()}>
+              Restore from a file
+            </button>
+          )}
+
+          {message ? <p className="preview">{message}</p> : null}
+        </div>
       </section>
 
       <section className="card">

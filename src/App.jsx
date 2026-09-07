@@ -10,6 +10,7 @@ import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
+import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -280,6 +281,7 @@ export default function App() {
         <Settings
           member={state.member}
           currency={state.currency}
+          state={state}
           onSetName={(name) =>
             setState((prev) => ({
               ...prev,
@@ -289,6 +291,12 @@ export default function App() {
           onCurrencyChange={(currency) =>
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
+          onRestore={(restored, mode) => {
+            dirty.current = true;
+            setState((prev) =>
+              mode === 'replace' ? replaceWithBackup(restored) : mergeBackup(prev, restored)
+            );
+          }}
           onClose={() => setSettingsOpen(false)}
         />
       ) : (
