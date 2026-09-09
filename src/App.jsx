@@ -314,7 +314,6 @@ export default function App() {
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
           bankLink={state.bankLink}
-          onSetBankLink={(link) => setState((prev) => ({ ...prev, bankLink: link }))}
           onSetBankLink={(bankLink) => setState((prev) => ({ ...prev, bankLink }))}
           onRestore={(restored, mode) => {
             dirty.current = true;

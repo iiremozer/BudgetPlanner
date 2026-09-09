@@ -81,12 +81,13 @@ export default function TransferCard({ entries, transfers, currency, prompting, 
         <div className="stack" style={{ marginTop: 14 }}>
           {bankLink ? (
             <a
-              className="btn btn-link"
+              className="btn btn-ghost bank-link"
               href={bankLink.url}
               target="_blank"
               rel="noopener noreferrer"
             >
-              Open {hostOf(bankLink)}
+              <span>Open my bank</span>
+              <span className="bank-host">{hostOf(bankLink)}</span>
             </a>
           ) : null}
           <button type="button" className="btn" onClick={() => confirm(pending)}>

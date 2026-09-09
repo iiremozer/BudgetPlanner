@@ -271,8 +271,8 @@ describe('banka kısayolu', () => {
     fireEvent.change(screen.getByPlaceholderText('https://'), {
       target: { value: 'javascript:alert(1)' },
     });
-    fireEvent.click(screen.getByText('Save shortcut'));
-    expect(screen.getByText(/full https address/)).toBeTruthy();
+    fireEvent.click(screen.getByText('Save link'));
+    expect(screen.getByText(/full https:\/\/ web address/)).toBeTruthy();
   });
 
   it('kaydedilen adres aktarım kartında alan adıyla görünür', () => {

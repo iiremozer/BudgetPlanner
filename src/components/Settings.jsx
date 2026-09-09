@@ -171,56 +171,6 @@ export default function Settings({
 
       <section className="card">
         <div className="card-head">
-          <h3 className="card-title">Your bank</h3>
-          {bankLink ? <span className="card-note">{hostOf(bankLink)}</span> : null}
-        </div>
-        <div className="stack">
-          <p className="hint">
-            Paste your own bank's web address. A shortcut appears next to the transfer prompt, so
-            moving money and confirming it takes one trip. On most banks this opens their app.
-          </p>
-          <input
-            className="control"
-            type="url"
-            inputMode="url"
-            placeholder="https://"
-            value={link}
-            onChange={(e) => {
-              setLink(e.target.value);
-              setLinkError('');
-            }}
-          />
-          {linkError ? <p className="error">{linkError}</p> : null}
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              if (link.trim() === '') {
-                onSetBankLink(null);
-                setLinkError('');
-                return;
-              }
-              const parsed = normalizeBankLink(link);
-              if (!parsed) {
-                setLinkError('That needs to be a full https address, like https://bank.co.uk');
-                return;
-              }
-              onSetBankLink({ url: parsed.url });
-              setLink(parsed.url);
-            }}
-          >
-            {link.trim() === '' ? 'Remove shortcut' : 'Save shortcut'}
-          </button>
-          <p className="hint">
-            This stays on your phone. It is never sent with shared goals, and the address is always
-            shown on the button so you can see where it goes. The app never touches your money — it
-            only opens a link.
-          </p>
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="card-head">
           <h3 className="card-title">Backup</h3>
         </div>
         <div className="stack">
