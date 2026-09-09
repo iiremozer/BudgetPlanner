@@ -2,6 +2,7 @@ import { DEFAULT_CURRENCY, isCurrencyCode } from './money.js';
 import { isPeriod, DEFAULT_PERIOD } from './pace.js';
 import { emptyDeleted } from './sync.js';
 import { isColorId, colorForEmoji } from './colors.js';
+import { cleanBankLink } from './banklink.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
@@ -23,6 +24,7 @@ export function defaultState() {
     deleted: emptyDeleted(),
     transfers: [],
     member: null,
+    bankLink: null,
   };
 }
 
@@ -140,6 +142,8 @@ export function normalizeState(raw) {
       ? raw.transfers.map(cleanTransfer).filter(Boolean)
       : [],
     member: cleanMember(raw.member),
+    // Cihaza özeldir: paylaşılan hedeflerle asla sunucuya gitmez.
+    bankLink: cleanBankLink(raw.bankLink),
   };
 }
 

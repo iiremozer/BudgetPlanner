@@ -218,3 +218,32 @@ describe('hedef bazında paylaşım', () => {
     expect(mergeGoalBook(local, { entries: [] }, 'g1')).toBe(local);
   });
 });
+
+describe('banka bağlantısı paylaşılmaz', () => {
+  it('paketin içinde yer almaz', () => {
+    const state = {
+      ...base(),
+      goals: [{ id: 'g1', name: 'Ev', target: 100000, createdAt: '2026-01-01T00:00:00Z' }],
+      bankLink: { url: 'https://bank.example.com/' },
+      transfers: [{ id: 't1', amount: 500, at: '2026-01-02T00:00:00Z' }],
+    };
+    const pkg = shareableGoal(state, 'g1');
+    expect(pkg.bankLink).toBeUndefined();
+    expect(pkg.transfers).toBeUndefined();
+  });
+
+  it('birleştirmede yerel bağlantı korunur', () => {
+    const local = {
+      ...base(),
+      goals: [{ id: 'g1', name: 'Ev', target: 100000, createdAt: '2026-01-01T00:00:00Z' }],
+      bankLink: { url: 'https://bank.example.com/' },
+    };
+    const remote = {
+      goal: { id: 'g1', name: 'Ev', target: 100000, createdAt: '2026-01-01T00:00:00Z' },
+      entries: [],
+      deleted: emptyDeleted(),
+      bankLink: { url: 'https://sahte.example.com/' },
+    };
+    expect(mergeGoalBook(local, remote, 'g1').bankLink).toEqual({ url: 'https://bank.example.com/' });
+  });
+});

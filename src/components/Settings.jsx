@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { CURRENCIES, CURRENCY_CODES } from '../lib/money.js';
 import { toBackup, fromBackup, backupFilename } from '../lib/backup.js';
+import { normalizeBankLink, hostOf } from '../lib/banklink.js';
 
 export default function Settings({
   member,
@@ -9,13 +10,19 @@ export default function Settings({
   onSetName,
   onCurrencyChange,
   onRestore,
+  bankLink,
+  onSetBankLink,
   onClose,
 }) {
   const [name, setName] = useState(member?.name ?? '');
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(null);
   const [message, setMessage] = useState('');
+  const [link, setLink] = useState(bankLink?.url ?? '');
+  const [linkError, setLinkError] = useState('');
   const fileInput = useRef(null);
+  const [bank, setBank] = useState(bankLink?.url ?? '');
+  const [bankError, setBankError] = useState('');
 
   function exportBackup() {
     const payload = toBackup(state);
@@ -112,6 +119,104 @@ export default function Settings({
         <p className="hint" style={{ marginTop: 12 }}>
           Changing this relabels existing amounts. It does not convert them.
         </p>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Your bank</h3>
+          {bankLink ? <span className="card-note">{hostOf(bankLink)}</span> : null}
+        </div>
+        <div className="stack">
+          <p className="hint">
+            Paste your own bank's web address and a shortcut appears next to the transfer
+            reminder. This app never touches your money or your login. The link stays on this
+            phone and is never shared with anyone you share a goal with.
+          </p>
+          <input
+            className="control"
+            type="url"
+            inputMode="url"
+            autoCapitalize="off"
+            placeholder="https://"
+            value={bank}
+            onChange={(e) => {
+              setBank(e.target.value);
+              setBankError('');
+            }}
+          />
+          {bankError ? <p className="error">{bankError}</p> : null}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              if (bank.trim() === '') {
+                onSetBankLink(null);
+                setBankError('');
+                return;
+              }
+              const parsed = normalizeBankLink(bank);
+              if (!parsed) {
+                setBankError('That needs to be a full https:// web address.');
+                return;
+              }
+              onSetBankLink({ url: parsed.url });
+              setBank(parsed.url);
+              setBankError('');
+            }}
+          >
+            {bank.trim() === '' ? 'Remove link' : 'Save link'}
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Your bank</h3>
+          {bankLink ? <span className="card-note">{hostOf(bankLink)}</span> : null}
+        </div>
+        <div className="stack">
+          <p className="hint">
+            Paste your own bank's web address. A shortcut appears next to the transfer prompt, so
+            moving money and confirming it takes one trip. On most banks this opens their app.
+          </p>
+          <input
+            className="control"
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            value={link}
+            onChange={(e) => {
+              setLink(e.target.value);
+              setLinkError('');
+            }}
+          />
+          {linkError ? <p className="error">{linkError}</p> : null}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              if (link.trim() === '') {
+                onSetBankLink(null);
+                setLinkError('');
+                return;
+              }
+              const parsed = normalizeBankLink(link);
+              if (!parsed) {
+                setLinkError('That needs to be a full https address, like https://bank.co.uk');
+                return;
+              }
+              onSetBankLink({ url: parsed.url });
+              setLink(parsed.url);
+            }}
+          >
+            {link.trim() === '' ? 'Remove shortcut' : 'Save shortcut'}
+          </button>
+          <p className="hint">
+            This stays on your phone. It is never sent with shared goals, and the address is always
+            shown on the button so you can see where it goes. The app never touches your money — it
+            only opens a link.
+          </p>
+        </div>
       </section>
 
       <section className="card">

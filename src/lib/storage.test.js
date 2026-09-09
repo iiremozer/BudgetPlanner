@@ -267,3 +267,20 @@ describe('aktarımlar', () => {
     expect(normalizeState({ transfers: 'çöp' }).transfers).toEqual([]);
   });
 });
+
+describe('banka bağlantısı', () => {
+  it('https adresini korur', () => {
+    expect(normalizeState({ bankLink: { url: 'https://bank.example.com' } }).bankLink).toEqual({
+      url: 'https://bank.example.com/',
+    });
+  });
+
+  it('güvensiz adresi atar', () => {
+    expect(normalizeState({ bankLink: { url: 'javascript:alert(1)' } }).bankLink).toBeNull();
+    expect(normalizeState({ bankLink: { url: 'http://bank.example.com' } }).bankLink).toBeNull();
+  });
+
+  it('yoksa null olur', () => {
+    expect(normalizeState({}).bankLink).toBeNull();
+  });
+});

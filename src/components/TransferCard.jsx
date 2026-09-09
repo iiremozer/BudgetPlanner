@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { formatMoney, parseAmount, CURRENCIES } from '../lib/money.js';
 import { pendingAmount, daysWaiting, lastTransferAt } from '../lib/transfers.js';
+import { hostOf } from '../lib/banklink.js';
 
-export default function TransferCard({ entries, transfers, currency, prompting, onConfirm }) {
+export default function TransferCard({ entries, transfers, currency, prompting, bankLink, onConfirm }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
@@ -78,6 +79,16 @@ export default function TransferCard({ entries, transfers, currency, prompting, 
         </div>
       ) : (
         <div className="stack" style={{ marginTop: 14 }}>
+          {bankLink ? (
+            <a
+              className="btn btn-link"
+              href={bankLink.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open {hostOf(bankLink)}
+            </a>
+          ) : null}
           <button type="button" className="btn" onClick={() => confirm(pending)}>
             I moved all {formatMoney(pending, currency)}
           </button>

@@ -303,6 +303,7 @@ export default function App() {
           member={state.member}
           currency={state.currency}
           state={state}
+          bankLink={state.bankLink}
           onSetName={(name) =>
             setState((prev) => ({
               ...prev,
@@ -312,6 +313,9 @@ export default function App() {
           onCurrencyChange={(currency) =>
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
+          bankLink={state.bankLink}
+          onSetBankLink={(link) => setState((prev) => ({ ...prev, bankLink: link }))}
+          onSetBankLink={(bankLink) => setState((prev) => ({ ...prev, bankLink }))}
           onRestore={(restored, mode) => {
             dirty.current = true;
             setState((prev) =>
@@ -349,6 +353,7 @@ export default function App() {
               transfers={state.transfers}
               currency={state.currency}
               prompting
+              bankLink={state.bankLink}
               onConfirm={confirmTransfer}
             />
           ) : null}
@@ -411,6 +416,7 @@ export default function App() {
             entries={state.entries}
             transfers={state.transfers}
             currency={state.currency}
+            bankLink={state.bankLink}
             onConfirm={confirmTransfer}
           />
 

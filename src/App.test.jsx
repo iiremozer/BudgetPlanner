@@ -257,3 +257,40 @@ describe('gerçek aktarım', () => {
     expect(screen.getByText(/is in the bank/)).toBeTruthy();
   });
 });
+
+describe('banka kısayolu', () => {
+  it('ayarlarda alan vardır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Your bank')).toBeTruthy();
+  });
+
+  it('güvensiz adresi reddeder', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.change(screen.getByPlaceholderText('https://'), {
+      target: { value: 'javascript:alert(1)' },
+    });
+    fireEvent.click(screen.getByText('Save shortcut'));
+    expect(screen.getByText(/full https address/)).toBeTruthy();
+  });
+
+  it('kaydedilen adres aktarım kartında alan adıyla görünür', () => {
+    const old = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        goals: [],
+        entries: [{ id: 'e1', amount: 2600, goalId: null, at: old }],
+        transfers: [],
+        bankLink: { url: 'https://www.bank.example.com/login' },
+      })
+    );
+    render(<App />);
+    const link = screen.getByText('Open my bank').closest('a');
+    expect(link.getAttribute('href')).toBe('https://www.bank.example.com/login');
+    expect(link.getAttribute('rel')).toContain('noopener');
+    expect(screen.getByText('bank.example.com')).toBeTruthy();
+  });
+});
