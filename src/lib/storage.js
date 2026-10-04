@@ -26,6 +26,7 @@ export function defaultState() {
     member: null,
     bankLink: null,
     seen: {},
+    celebrated: {},
   };
 }
 
@@ -163,6 +164,9 @@ export function normalizeState(raw) {
     // Cihaza özeldir: paylaşılan hedeflerle asla sunucuya gitmez.
     bankLink: cleanBankLink(raw.bankLink),
     seen: cleanSeen(raw.seen),
+    // Kutlamanın gösterildiği hedefler. Cihaza özel: paylaşılan bir hedefte
+    // iki taraf da kendi kutlamasını görsün diye sunucuya gitmiyor.
+    celebrated: cleanSeen(raw.celebrated),
   };
 }
 

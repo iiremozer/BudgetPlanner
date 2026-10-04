@@ -388,3 +388,72 @@ describe('eşin aktivitesi', () => {
     expect(screen.queryByText(/new/)).toBeNull();
   });
 });
+
+describe('hedef tamamlama kutlaması', () => {
+  function seedGoal({ amount, target, celebrated }) {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Irem' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'Japan',
+            emoji: '🛫',
+            color: 'teal',
+            target,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        entries: [
+          { id: 'e1', amount, goalId: 'g1', at: '2026-01-02T10:00:00.000Z', emoji: '☕', by: 'Irem' },
+        ],
+        celebrated: celebrated ? { g1: '2026-02-01T00:00:00.000Z' } : {},
+      })
+    );
+  }
+
+  it('hedef dolunca kutlama açılır', () => {
+    seedGoal({ amount: 100000, target: 100000 });
+    render(<App />);
+    expect(screen.getByText('Goal reached')).toBeTruthy();
+    expect(screen.getByText('Japan')).toBeTruthy();
+    // Tutar hem kutlamada hem arkadaki toplamda görünür.
+    expect(screen.getAllByText('£1,000.00').length).toBeGreaterThan(0);
+    expect(screen.getByText(/skipped spend/)).toBeTruthy();
+  });
+
+  it('hedef dolmadıysa açılmaz', () => {
+    seedGoal({ amount: 50000, target: 100000 });
+    render(<App />);
+    expect(screen.queryByText('Goal reached')).toBeNull();
+  });
+
+  it('bir kez kutlanınca tekrar açılmaz', () => {
+    seedGoal({ amount: 100000, target: 100000, celebrated: true });
+    render(<App />);
+    expect(screen.queryByText('Goal reached')).toBeNull();
+  });
+
+  it('kapatınca bir daha gelmez', () => {
+    seedGoal({ amount: 100000, target: 100000 });
+    render(<App />);
+    fireEvent.click(screen.getByText('Done'));
+    expect(screen.queryByText('Goal reached')).toBeNull();
+    expect(screen.getByText('What did you skip?')).toBeTruthy();
+  });
+
+  it('paylaşım metni panoya kopyalanır', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText }, share: undefined });
+
+    seedGoal({ amount: 100000, target: 100000 });
+    render(<App />);
+    fireEvent.click(screen.getByText('Share this'));
+
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalled());
+    expect(writeText.mock.calls[0][0]).toContain('Japan');
+  });
+});

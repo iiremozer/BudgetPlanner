@@ -6,6 +6,7 @@ import Ledger from './components/Ledger.jsx';
 import Settings from './components/Settings.jsx';
 import StreakTab from './components/StreakTab.jsx';
 import TransferCard from './components/TransferCard.jsx';
+import Celebration from './components/Celebration.jsx';
 import TabBar from './components/TabBar.jsx';
 import { loadState, saveState, makeId } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
@@ -14,6 +15,7 @@ import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
 import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { newFromOthers } from './lib/contributions.js';
+import { pendingCelebration } from './lib/celebration.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -177,6 +179,10 @@ export default function App() {
           0
         ),
     [state.goals, state.entries, state.member, state.seen]
+  );
+  const celebrating = useMemo(
+    () => pendingCelebration(state.goals, state.entries, state.celebrated),
+    [state.goals, state.entries, state.celebrated]
   );
   const prompting = useMemo(
     () => shouldPrompt(state.entries, state.transfers),
@@ -476,6 +482,21 @@ export default function App() {
       {settingsOpen ? null : (
         <TabBar active={tab} onChange={setTab} badge={streak} goalsDot={unseenCount > 0} />
       )}
+
+      {celebrating ? (
+        <Celebration
+          goal={celebrating}
+          entries={state.entries}
+          currency={state.currency}
+          myName={state.member?.name}
+          onClose={() =>
+            setState((prev) => ({
+              ...prev,
+              celebrated: { ...prev.celebrated, [celebrating.id]: new Date().toISOString() },
+            }))
+          }
+        />
+      ) : null}
 
       {burst ? (
         <div className="burst" aria-hidden="true">
