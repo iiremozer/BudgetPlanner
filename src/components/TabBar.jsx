@@ -4,7 +4,7 @@ const TABS = [
   { id: 'history', label: 'History' },
 ];
 
-export default function TabBar({ active, onChange, badge }) {
+export default function TabBar({ active, onChange, badge, goalsDot }) {
   return (
     <nav className="tabbar" aria-label="Sections">
       {TABS.map((tab) => (
@@ -17,6 +17,7 @@ export default function TabBar({ active, onChange, badge }) {
         >
           <span className="tab-label">{tab.label}</span>
           {tab.id === 'history' && badge > 0 ? <span className="tab-badge">{badge}</span> : null}
+          {tab.id === 'goals' && goalsDot ? <span className="tab-dot" /> : null}
         </button>
       ))}
     </nav>

@@ -25,7 +25,25 @@ export function defaultState() {
     transfers: [],
     member: null,
     bankLink: null,
+    seen: {},
   };
+}
+
+/**
+ * Paylaşılan her hedefi en son ne zaman görüntülediğin. Cihaza özeldir —
+ * "eşin ne eklemiş" rozetini doğru göstermek için gerekiyor, karşı tarafı
+ * ilgilendirmiyor, o yüzden paylaşıma dahil değil.
+ */
+function cleanSeen(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [goalId, value] of Object.entries(raw)) {
+    if (typeof goalId !== 'string' || !goalId) continue;
+    if (typeof value !== 'string') continue;
+    if (Number.isNaN(new Date(value).getTime())) continue;
+    out[goalId] = value;
+  }
+  return out;
 }
 
 /** Gerçekten birikim hesabına aktarıldığı onaylanan tutarlar. */
@@ -144,6 +162,7 @@ export function normalizeState(raw) {
     member: cleanMember(raw.member),
     // Cihaza özeldir: paylaşılan hedeflerle asla sunucuya gitmez.
     bankLink: cleanBankLink(raw.bankLink),
+    seen: cleanSeen(raw.seen),
   };
 }
 

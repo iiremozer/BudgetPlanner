@@ -294,3 +294,97 @@ describe('banka kısayolu', () => {
     expect(screen.getByText('bank.example.com')).toBeTruthy();
   });
 });
+
+describe('eşin aktivitesi', () => {
+  function seedShared({ seen } = {}) {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Irem' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'House',
+            emoji: '🏠',
+            color: 'clay',
+            target: 500000,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            share: { code: 'ABCD1234EFGH' },
+          },
+        ],
+        entries: [
+          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' },
+          { id: 'e2', amount: 20000, goalId: 'g1', at: '2026-03-02T10:00:00.000Z', by: 'Batuhan' },
+        ],
+        seen: seen ? { g1: seen } : {},
+      })
+    );
+  }
+
+  it('kimin ne koyduğunu gösterir', () => {
+    seedShared({ seen: '2026-04-01T00:00:00.000Z' });
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getByText('You')).toBeTruthy();
+    expect(screen.getByText('Batuhan')).toBeTruthy();
+    expect(screen.getByText('£100.00')).toBeTruthy();
+    expect(screen.getByText('£200.00')).toBeTruthy();
+  });
+
+  it('görülmemiş kayıt varsa rozet çıkar', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getByText('1 new')).toBeTruthy();
+    expect(screen.getByText(/Batuhan added £200\.00/)).toBeTruthy();
+  });
+
+  it('her şey görüldüyse rozet yerine Shared yazar', () => {
+    seedShared({ seen: '2026-04-01T00:00:00.000Z' });
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByText('1 new')).toBeNull();
+    expect(screen.getByText('Shared')).toBeTruthy();
+  });
+
+  it('sekmeden çıkınca görülmüş sayılır', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getByText('1 new')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByText('1 new')).toBeNull();
+  });
+
+  it('kendi kaydın yeni sayılmaz', () => {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Irem' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'House',
+            emoji: '🏠',
+            target: 500000,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            share: { code: 'ABCD1234EFGH' },
+          },
+        ],
+        entries: [
+          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' },
+        ],
+        seen: {},
+      })
+    );
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByText(/new/)).toBeNull();
+  });
+});

@@ -284,3 +284,23 @@ describe('banka bağlantısı', () => {
     expect(normalizeState({}).bankLink).toBeNull();
   });
 });
+
+describe('son görülme kayıtları', () => {
+  it('geçerli zaman damgalarını korur', () => {
+    const seen = { g1: '2026-03-01T10:00:00.000Z' };
+    expect(normalizeState({ seen }).seen).toEqual(seen);
+  });
+
+  it('bozuk tarihi atar', () => {
+    expect(normalizeState({ seen: { g1: 'bir ara' } }).seen).toEqual({});
+  });
+
+  it('nesne değilse boşaltır', () => {
+    expect(normalizeState({ seen: 'çöp' }).seen).toEqual({});
+    expect(normalizeState({ seen: ['a'] }).seen).toEqual({});
+  });
+
+  it('yoksa boş nesne olur', () => {
+    expect(normalizeState({}).seen).toEqual({});
+  });
+});

@@ -7,6 +7,8 @@ import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRat
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
 import Jar from './Jar.jsx';
+import Contributors from './Contributors.jsx';
+import { newFromOthers } from '../lib/contributions.js';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
 
@@ -43,6 +45,7 @@ export default function GoalList({
   onUnshare,
   onJoin,
   onSyncNow,
+  seen,
   generalName,
   onRenameGeneral,
 }) {
@@ -150,7 +153,16 @@ export default function GoalList({
                 {goal.name}
                 {index === 0 ? <span className="goal-badge">Priority</span> : null}
                 {goal.share ? (
-                  <span className="goal-badge goal-badge-shared">Shared</span>
+                  (() => {
+                    const fresh = newFromOthers(entries, goal.id, memberName, seen?.[goal.id]);
+                    return fresh.length > 0 ? (
+                      <span className="goal-badge goal-badge-new">
+                        {fresh.length} new
+                      </span>
+                    ) : (
+                      <span className="goal-badge goal-badge-shared">Shared</span>
+                    );
+                  })()
                 ) : null}
               </div>
               <div className="goal-figure">
@@ -167,6 +179,17 @@ export default function GoalList({
               ) : (
                 <div className="goal-pace">Open-ended</div>
               )}
+
+              {goal.share ? (
+                <Contributors
+                  entries={entries}
+                  goalId={goal.id}
+                  currency={currency}
+                  myName={memberName}
+                  seenAt={seen?.[goal.id]}
+                  tone={tone}
+                />
+              ) : null}
 
               <div className="goal-actions">
                 <button

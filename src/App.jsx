@@ -13,6 +13,7 @@ import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
 import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
+import { newFromOthers } from './lib/contributions.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -140,11 +141,42 @@ export default function App() {
     setPullDistance(0);
   }
 
+  // Hedefler sekmesinden çıkarken paylaşılan hedefleri görülmüş sayıyoruz.
+  // Girerken işaretlersek rozet okunmadan kaybolur.
+  const leavingGoals = useRef(false);
+  useEffect(() => {
+    if (tab === 'goals') {
+      leavingGoals.current = true;
+      return;
+    }
+    if (!leavingGoals.current) return;
+    leavingGoals.current = false;
+
+    const shared = stateRef.current.goals.filter((g) => g.share?.code);
+    if (shared.length === 0) return;
+    const now = new Date().toISOString();
+    setState((prev) => ({
+      ...prev,
+      seen: shared.reduce((acc, g) => ({ ...acc, [g.id]: now }), { ...prev.seen }),
+    }));
+  }, [tab]);
+
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
   const pending = useMemo(
     () => pendingAmount(state.entries, state.transfers),
     [state.entries, state.transfers]
+  );
+  const unseenCount = useMemo(
+    () =>
+      state.goals
+        .filter((g) => g.share?.code)
+        .reduce(
+          (sum, g) =>
+            sum + newFromOthers(state.entries, g.id, state.member?.name, state.seen?.[g.id]).length,
+          0
+        ),
+    [state.goals, state.entries, state.member, state.seen]
   );
   const prompting = useMemo(
     () => shouldPrompt(state.entries, state.transfers),
@@ -400,6 +432,7 @@ export default function App() {
             onUnshare={unshareGoal}
             onJoin={joinGoal}
             onSyncNow={sync}
+            seen={state.seen}
             generalName={state.generalName}
             onRenameGeneral={(name) =>
               setState((prev) => ({ ...prev, generalName: name.trim() || prev.generalName }))
@@ -440,7 +473,9 @@ export default function App() {
         </>
       )}
 
-      {settingsOpen ? null : <TabBar active={tab} onChange={setTab} badge={streak} />}
+      {settingsOpen ? null : (
+        <TabBar active={tab} onChange={setTab} badge={streak} goalsDot={unseenCount > 0} />
+      )}
 
       {burst ? (
         <div className="burst" aria-hidden="true">
