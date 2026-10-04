@@ -422,7 +422,7 @@ describe('hedef tamamlama kutlaması', () => {
     expect(screen.getByText('Japan')).toBeTruthy();
     // Tutar hem kutlamada hem arkadaki toplamda görünür.
     expect(screen.getAllByText('£1,000.00').length).toBeGreaterThan(0);
-    expect(screen.getByText(/skipped spend/)).toBeTruthy();
+    expect(screen.getByText(/saved in 1 day/)).toBeTruthy();
   });
 
   it('hedef dolmadıysa açılmaz', () => {
