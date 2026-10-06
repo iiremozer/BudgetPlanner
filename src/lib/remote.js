@@ -39,3 +39,12 @@ export function readBook(code) {
 export function writeBook(code, state) {
   return callFunction('book_write', { p_code: code, p_state: state });
 }
+
+/**
+ * Paylaşılan hedefi sunucudan tamamen siler. Herkesi etkiler: kodu bilen
+ * diğer kişi de bir daha ulaşamaz. Kendi cihazlarındaki kopya durmaya devam
+ * eder, çünkü kayıtlar yerelde de tutuluyor.
+ */
+export function deleteBook(code) {
+  return callFunction('book_delete', { p_code: code });
+}

@@ -44,6 +44,7 @@ export default function GoalList({
   onMove,
   onShare,
   onUnshare,
+  onDeleteShared,
   onJoin,
   onSyncNow,
   seen,
@@ -58,6 +59,7 @@ export default function GoalList({
   const [joinError, setJoinError] = useState('');
   const [copied, setCopied] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [renaming, setRenaming] = useState(false);
   const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
@@ -277,10 +279,56 @@ export default function GoalList({
                         Sync now
                       </button>
                     </div>
-                    <div className="share-foot">
+                    <div className="share-stop">
                       <button type="button" className="link" onClick={() => onUnshare(goal.id)}>
-                        Stop sharing
+                        Stop sharing on this phone
                       </button>
+                      <p className="hint">
+                        Your entries stay. The other person keeps the shared copy and can carry on.
+                      </p>
+                    </div>
+
+                    <div className="share-stop">
+                      <button
+                        type="button"
+                        className="link link-danger"
+                        onClick={() => setConfirmDelete(goal.id)}
+                      >
+                        Delete the shared copy
+                      </button>
+                      <p className="hint">
+                        Wipes it from the server for everyone. Each of you keeps whatever is already
+                        on your own phone.
+                      </p>
+                    </div>
+
+                    {confirmDelete === goal.id ? (
+                      <div className="confirm-box">
+                        <p className="hint">
+                          Delete the shared copy of {goal.name}? The other person loses access
+                          straight away. This cannot be undone.
+                        </p>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() => {
+                            onDeleteShared(goal.id);
+                            setConfirmDelete(null);
+                          }}
+                        >
+                          Yes, delete it
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={() => setConfirmDelete(null)}
+                        >
+                          Keep it
+                        </button>
+                      </div>
+                    ) : null}
+
+                    <div className="share-foot">
                       <button
                         type="button"
                         className="btn btn-ghost"

@@ -55,9 +55,17 @@ Tutarlar tam sayı olarak kuruş cinsinden saklanır, ondalık hatası olmasın 
 Pages'in çalışması için depo ayarlarında **Settings → Pages → Source: GitHub Actions**
 seçili olmalıdır.
 
+## Veri silme
+
+- Paylaşılan bir hedefi sunucudan tamamen silmek: hedefin paylaşım panelinde
+  "Delete the shared copy". `book_delete` fonksiyonunu çağırır, satır silinir.
+- Cihazdaki her şeyi silmek: Ayarlar → Your data → "Erase everything on this device".
+- `supabase/setup.sql` dosyasının sonundaki ek bölüm `book_delete` fonksiyonunu kurar.
+
 ## Sırada
 
 - Kategori bazlı bütçe limitleri
 - Aylık ve haftalık planlama
 - Çevrimdışı çalışma (service worker)
-- Hedef tamamlandığında kutlama anı
+- Gizlilik metni ve kullanım şartları (mağazaya çıkmadan önce zorunlu)
+- Destek/iletişim sayfası

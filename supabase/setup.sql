@@ -69,3 +69,33 @@ revoke all on function public.book_read(text) from public;
 revoke all on function public.book_write(text, jsonb) from public;
 grant execute on function public.book_read(text) to anon;
 grant execute on function public.book_write(text, jsonb) to anon;
+
+-- ---------------------------------------------------------------------------
+-- EK: Paylaşılan hedefi sunucudan tamamen silme.
+-- Mağaza kuralları veri silme yolu şart koşuyor; bu fonksiyon onu sağlıyor.
+-- Bu bölümü SQL Editor'de ayrıca çalıştırman yeterli, üsttekileri tekrar
+-- çalıştırman sorun çıkarmaz (hepsi "if not exists" / "or replace").
+-- ---------------------------------------------------------------------------
+
+create or replace function public.book_delete(p_code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_code text := upper(btrim(p_code));
+  v_found boolean;
+begin
+  if v_code !~ '^[A-Z0-9]{8,24}$' then
+    raise exception 'invalid code';
+  end if;
+
+  delete from public.books where code = v_code;
+  get diagnostics v_found = row_count;
+  return v_found > 0;
+end;
+$$;
+
+revoke all on function public.book_delete(text) from public;
+grant execute on function public.book_delete(text) to anon;

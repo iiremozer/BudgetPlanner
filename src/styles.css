@@ -1422,3 +1422,32 @@ select {
 .goal-tinted {
   transition: filter 0.4s ease, box-shadow 0.4s ease, background-color 0.4s ease;
 }
+
+.share-stop {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.share-stop .hint {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.link-danger {
+  color: var(--danger);
+}
+
+.confirm-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}

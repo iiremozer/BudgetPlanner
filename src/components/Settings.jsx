@@ -15,6 +15,7 @@ export default function Settings({
   onRestore,
   bankLink,
   onSetBankLink,
+  onEraseEverything,
   theme,
   accent,
   onSetTheme,
@@ -27,6 +28,7 @@ export default function Settings({
   const [message, setMessage] = useState('');
   const [link, setLink] = useState(bankLink?.url ?? '');
   const [linkError, setLinkError] = useState('');
+  const [confirmErase, setConfirmErase] = useState(false);
   const fileInput = useRef(null);
   const [bank, setBank] = useState(bankLink?.url ?? '');
   const [bankError, setBankError] = useState('');
@@ -41,7 +43,13 @@ export default function Settings({
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        // Tarayıcı bu adresi zaten bırakmışsa sorun değil.
+      }
+    }, 1000);
     setMessage(`Saved ${payload.counts.entries} wins and ${payload.counts.goals} goals.`);
   }
 
@@ -288,10 +296,40 @@ export default function Settings({
         <div className="card-head">
           <h3 className="card-title">Your data</h3>
         </div>
-        <p className="hint">
-          Everything is kept on this device. Only the goals you choose to share leave your phone,
-          and only that goal and its entries go with them.
-        </p>
+        <div className="stack">
+          <p className="hint">
+            Everything is kept on this device. Only the goals you choose to share leave your phone,
+            and only that goal and its entries go with them. To remove a shared goal from the
+            server, open that goal and choose "Delete the shared copy".
+          </p>
+
+          {confirmErase ? (
+            <div className="confirm-box">
+              <p className="hint">
+                Erase every goal, win and setting on this phone? Shared copies on the server are not
+                touched. Save a copy first if you might want it back.
+              </p>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  onEraseEverything();
+                  setConfirmErase(false);
+                  setMessage('Everything on this device was erased.');
+                }}
+              >
+                Yes, erase everything
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => setConfirmErase(false)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={() => setConfirmErase(true)}>
+              Erase everything on this device
+            </button>
+          )}
+        </div>
       </section>
     </>
   );

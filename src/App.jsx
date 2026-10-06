@@ -8,7 +8,7 @@ import StreakTab from './components/StreakTab.jsx';
 import TransferCard from './components/TransferCard.jsx';
 import Celebration from './components/Celebration.jsx';
 import TabBar from './components/TabBar.jsx';
-import { loadState, saveState, makeId } from './lib/storage.js';
+import { loadState, saveState, makeId, defaultState } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
@@ -18,7 +18,7 @@ import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
 import { resolveTheme, accentOf } from './lib/colors.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
-import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
+import { readBook, writeBook, deleteBook, isRemoteConfigured } from './lib/remote.js';
 
 const BURST_MS = 1050;
 
@@ -312,6 +312,25 @@ export default function App() {
     }));
   }
 
+  /**
+   * Paylaşılan kopyayı sunucudan siler ve hedefi yerelde paylaşımdan çıkarır.
+   * Kayıtlar cihazda kalır; silinen şey yalnızca sunucudaki ortak kopyadır.
+   */
+  async function deleteSharedCopy(id) {
+    const goal = stateRef.current.goals.find((g) => g.id === id);
+    const code = goal?.share?.code;
+    if (!code) return;
+
+    setStatus('syncing');
+    try {
+      await deleteBook(code);
+      unshareGoal(id);
+      setStatus('idle');
+    } catch {
+      setStatus('error');
+    }
+  }
+
   function unshareGoal(id) {
     dirty.current = true;
     setState((prev) => ({
@@ -393,6 +412,7 @@ export default function App() {
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
           onSetBankLink={(bankLink) => setState((prev) => ({ ...prev, bankLink }))}
+          onEraseEverything={() => setState(defaultState())}
           onRestore={(restored, mode) => {
             dirty.current = true;
             setState((prev) =>
@@ -476,6 +496,7 @@ export default function App() {
             onMove={reorderGoal}
             onShare={shareGoal}
             onUnshare={unshareGoal}
+            onDeleteShared={deleteSharedCopy}
             onJoin={joinGoal}
             onSyncNow={sync}
             seen={state.seen}

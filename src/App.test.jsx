@@ -547,3 +547,74 @@ describe('hedef düzenleme', () => {
     expect(container.querySelector('.goal-rank-0').textContent).toContain('House');
   });
 });
+
+describe('veri silme', () => {
+  function seedShared() {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Irem' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'House',
+            emoji: '🏠',
+            target: 500000,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            share: { code: 'ABCD1234EFGH' },
+          },
+        ],
+        entries: [{ id: 'e1', amount: 5000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' }],
+      })
+    );
+  }
+
+  it('paylaşımı durdurmak ile silmek ayrı seçeneklerdir', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('👥 Shared'));
+    expect(screen.getByText('Stop sharing on this phone')).toBeTruthy();
+    expect(screen.getByText('Delete the shared copy')).toBeTruthy();
+  });
+
+  it('silmeden önce onay ister', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByText('Delete the shared copy'));
+    expect(screen.getByText(/cannot be undone/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Keep it'));
+    expect(screen.queryByText(/cannot be undone/)).toBeNull();
+  });
+
+  it('sunucudan silince hedef yerelde kalır ama paylaşımdan çıkar', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(true) })));
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByText('Delete the shared copy'));
+    fireEvent.click(screen.getByText('Yes, delete it'));
+
+    await vi.waitFor(() => expect(screen.getByText('👥 Share')).toBeTruthy());
+    expect(screen.getAllByText('House').length).toBeGreaterThan(0);
+  });
+
+  it('cihazı silmek onay ister ve defteri boşaltır', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+    expect(screen.getByText(/Erase every goal/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Yes, erase everything'));
+    fireEvent.click(screen.getByText('Done'));
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByText('House')).toBeNull();
+  });
+});
