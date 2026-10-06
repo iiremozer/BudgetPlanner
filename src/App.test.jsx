@@ -457,3 +457,93 @@ describe('hedef tamamlama kutlaması', () => {
     expect(writeText.mock.calls[0][0]).toContain('Japan');
   });
 });
+
+describe('tema ve kişiselleştirme', () => {
+  it('ayarlarda tema ve vurgu rengi vardır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Appearance')).toBeTruthy();
+    expect(screen.getByText('Dark')).toBeTruthy();
+    expect(screen.getByLabelText('Plum')).toBeTruthy();
+  });
+
+  it('koyu tema seçimi belgeye yazılır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Dark'));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('açık temaya dönülebilir', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Dark'));
+    fireEvent.click(screen.getByText('Light'));
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('vurgu rengi değişkene yazılır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByLabelText('Plum'));
+    expect(document.documentElement.style.getPropertyValue('--pine')).toBe('#452a46');
+  });
+});
+
+describe('hedef düzenleme', () => {
+  function seedTwoGoals() {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        goals: [
+          { id: 'g1', name: 'Japan', emoji: '🛫', color: 'teal', target: 300000, order: 0, createdAt: '2026-01-01T00:00:00.000Z' },
+          { id: 'g2', name: 'House', emoji: '🏠', color: 'clay', target: 500000, order: 1, createdAt: '2026-01-02T00:00:00.000Z' },
+        ],
+        entries: [],
+      })
+    );
+  }
+
+  it('adı değiştirilebilir', () => {
+    seedTwoGoals();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getAllByText('Edit')[0]);
+    const input = screen.getByDisplayValue('Japan');
+    fireEvent.change(input, { target: { value: 'Tokyo' } });
+    fireEvent.click(screen.getByText('Save changes'));
+    expect(screen.getAllByText('Tokyo').length).toBeGreaterThan(0);
+    expect(screen.queryByDisplayValue('Japan')).toBeNull();
+  });
+
+  it('hedef tutarı değiştirilebilir', () => {
+    seedTwoGoals();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getAllByText('Edit')[0]);
+    fireEvent.change(screen.getByDisplayValue('3,000.00'), { target: { value: '4000' } });
+    fireEvent.click(screen.getByText('Save changes'));
+    expect(screen.getByText(/of £4,000\.00/)).toBeTruthy();
+  });
+
+  it('adsız kaydetmeye izin vermez', () => {
+    seedTwoGoals();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getAllByText('Edit')[0]);
+    fireEvent.change(screen.getByDisplayValue('Japan'), { target: { value: '  ' } });
+    fireEvent.click(screen.getByText('Save changes'));
+    expect(screen.getByText('Give the goal a name.')).toBeTruthy();
+  });
+
+  it('sıra değişince kartların ağırlığı değişir', () => {
+    seedTwoGoals();
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(container.querySelector('.goal-rank-0').textContent).toContain('Japan');
+
+    fireEvent.click(screen.getAllByLabelText('Move up')[1]);
+    expect(container.querySelector('.goal-rank-0').textContent).toContain('House');
+  });
+});

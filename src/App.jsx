@@ -16,6 +16,7 @@ import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
+import { resolveTheme, accentOf } from './lib/colors.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -163,6 +164,32 @@ export default function App() {
     }));
   }, [tab]);
 
+  // Tema ve vurgu rengi belgeye yazılır; CSS değişkenleri oradan okunur.
+  const [prefersDark, setPrefersDark] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!query) return undefined;
+    const onChange = (e) => setPrefersDark(e.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  const theme = resolveTheme(state.theme, prefersDark);
+  const accent = accentOf(state.accent);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.style.setProperty('--pine', accent.base);
+    root.style.setProperty('--pine-soft', theme === 'dark' ? accent.soft : accent.base);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#121518' : accent.base);
+  }, [theme, accent]);
+
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
   const streak = useMemo(() => currentStreak(state.entries), [state.entries]);
   const pending = useMemo(
@@ -262,6 +289,16 @@ export default function App() {
     }));
   }
 
+  function editGoal(id, changes) {
+    dirty.current = true;
+    setState((prev) => ({
+      ...prev,
+      goals: prev.goals.map((g) =>
+        g.id === id ? { ...g, ...changes, updatedAt: new Date().toISOString() } : g
+      ),
+    }));
+  }
+
   function reorderGoal(id, direction) {
     dirty.current = true;
     setState((prev) => ({ ...prev, goals: moveGoal(prev.goals, id, direction) }));
@@ -342,6 +379,10 @@ export default function App() {
           currency={state.currency}
           state={state}
           bankLink={state.bankLink}
+          theme={state.theme}
+          accent={state.accent}
+          onSetTheme={(value) => setState((prev) => ({ ...prev, theme: value }))}
+          onSetAccent={(value) => setState((prev) => ({ ...prev, accent: value }))}
           onSetName={(name) =>
             setState((prev) => ({
               ...prev,
@@ -351,7 +392,6 @@ export default function App() {
           onCurrencyChange={(currency) =>
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
-          bankLink={state.bankLink}
           onSetBankLink={(bankLink) => setState((prev) => ({ ...prev, bankLink }))}
           onRestore={(restored, mode) => {
             dirty.current = true;
@@ -439,6 +479,8 @@ export default function App() {
             onJoin={joinGoal}
             onSyncNow={sync}
             seen={state.seen}
+            theme={theme}
+            onEdit={editGoal}
             generalName={state.generalName}
             onRenameGeneral={(name) =>
               setState((prev) => ({ ...prev, generalName: name.trim() || prev.generalName }))

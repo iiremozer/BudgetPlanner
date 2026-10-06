@@ -2,6 +2,9 @@ import { useRef, useState } from 'react';
 import { CURRENCIES, CURRENCY_CODES } from '../lib/money.js';
 import { toBackup, fromBackup, backupFilename } from '../lib/backup.js';
 import { normalizeBankLink, hostOf } from '../lib/banklink.js';
+import { ACCENTS, THEMES } from '../lib/colors.js';
+
+const THEME_LABELS = { system: 'Match phone', light: 'Light', dark: 'Dark' };
 
 export default function Settings({
   member,
@@ -12,6 +15,10 @@ export default function Settings({
   onRestore,
   bankLink,
   onSetBankLink,
+  theme,
+  accent,
+  onSetTheme,
+  onSetAccent,
   onClose,
 }) {
   const [name, setName] = useState(member?.name ?? '');
@@ -63,6 +70,47 @@ export default function Settings({
           Done
         </button>
       </div>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Appearance</h3>
+        </div>
+        <div className="stack">
+          <div>
+            <span className="field-label">Theme</span>
+            <div className="segmented segmented-3" role="group" aria-label="Theme">
+              {THEMES.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="segment"
+                  aria-pressed={theme === id}
+                  onClick={() => onSetTheme(id)}
+                >
+                  {THEME_LABELS[id]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="field-label">Accent colour</span>
+            <div className="swatches">
+              {ACCENTS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className="swatch"
+                  aria-label={a.name}
+                  aria-pressed={accent === a.id}
+                  style={{ background: a.base }}
+                  onClick={() => onSetAccent(a.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="card">
         <div className="card-head">

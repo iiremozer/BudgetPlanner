@@ -83,11 +83,11 @@ export default function Jar({ ratio = 0, emoji, complete = false, size = 68, id 
         <rect x="30" y="7" width="40" height="13" rx="3.5" fill={`url(#${lidId})`} />
         <rect x="30" y="7" width="40" height="13" rx="3.5" fill="none" stroke="#9c9587" strokeWidth="0.9" opacity="0.7" />
         <path d="M36 9.5v8M43 9.5v8M50 9.5v8M57 9.5v8M64 9.5v8" stroke="#9c9587" strokeWidth="0.7" opacity="0.35" />
-        <rect x="33" y="19.5" width="34" height="5" rx="1.6" fill="#cdc7b9" />
+        <rect x="33" y="19.5" width="34" height="5" rx="1.6" fill="var(--jar-lid)" />
 
         <g clipPath={`url(#${clipId})`}>
           {/* cam gövde */}
-          <path d={BODY} fill="#f7f5f0" />
+          <path d={BODY} fill="var(--jar-glass)" />
 
           {filled ? (
             <>
@@ -125,7 +125,7 @@ export default function Jar({ ratio = 0, emoji, complete = false, size = 68, id 
         </g>
 
         {/* kenar çizgisi */}
-        <path d={BODY} fill="none" stroke="#b6b0a2" strokeWidth="1.3" opacity="0.85" />
+        <path d={BODY} fill="none" stroke="var(--jar-edge)" strokeWidth="1.3" opacity="0.85" />
       </svg>
 
       {emoji ? (

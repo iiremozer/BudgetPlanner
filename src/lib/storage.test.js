@@ -304,3 +304,23 @@ describe('son görülme kayıtları', () => {
     expect(normalizeState({}).seen).toEqual({});
   });
 });
+
+describe('görünüm tercihleri', () => {
+  it('varsayılanlar sistem teması ve pine', () => {
+    const s = normalizeState({});
+    expect(s.theme).toBe('system');
+    expect(s.accent).toBe('pine');
+  });
+
+  it('geçerli seçimi korur', () => {
+    const s = normalizeState({ theme: 'dark', accent: 'plum' });
+    expect(s.theme).toBe('dark');
+    expect(s.accent).toBe('plum');
+  });
+
+  it('bilinmeyeni varsayılana çevirir', () => {
+    const s = normalizeState({ theme: 'sepia', accent: 'neon' });
+    expect(s.theme).toBe('system');
+    expect(s.accent).toBe('pine');
+  });
+});

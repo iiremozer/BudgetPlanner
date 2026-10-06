@@ -1,7 +1,7 @@
 import { DEFAULT_CURRENCY, isCurrencyCode } from './money.js';
 import { isPeriod, DEFAULT_PERIOD } from './pace.js';
 import { emptyDeleted } from './sync.js';
-import { isColorId, colorForEmoji } from './colors.js';
+import { isColorId, colorForEmoji, isAccentId, DEFAULT_ACCENT, isTheme } from './colors.js';
 import { cleanBankLink } from './banklink.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
@@ -27,6 +27,8 @@ export function defaultState() {
     bankLink: null,
     seen: {},
     celebrated: {},
+    theme: 'system',
+    accent: DEFAULT_ACCENT,
   };
 }
 
@@ -167,6 +169,8 @@ export function normalizeState(raw) {
     // Kutlamanın gösterildiği hedefler. Cihaza özel: paylaşılan bir hedefte
     // iki taraf da kendi kutlamasını görsün diye sunucuya gitmiyor.
     celebrated: cleanSeen(raw.celebrated),
+    theme: isTheme(raw.theme) ? raw.theme : 'system',
+    accent: isAccentId(raw.accent) ? raw.accent : DEFAULT_ACCENT,
   };
 }
 

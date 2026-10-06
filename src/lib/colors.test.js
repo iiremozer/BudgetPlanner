@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { PALETTE, SLATE, colorOf, isColorId, colorForEmoji, DEFAULT_COLOR } from './colors.js';
+import {
+  PALETTE,
+  SLATE,
+  colorOf,
+  isColorId,
+  colorForEmoji,
+  DEFAULT_COLOR,
+  ACCENTS,
+  accentOf,
+  isAccentId,
+  DEFAULT_ACCENT,
+  THEMES,
+  isTheme,
+  resolveTheme,
+  tintFor,
+} from './colors.js';
 
 describe('palet', () => {
   it('kimlikler benzersizdir', () => {
@@ -45,5 +60,47 @@ describe('colorForEmoji', () => {
 
   it('bilinmeyen simgede varsayılanı verir', () => {
     expect(colorForEmoji('🦕')).toBe(DEFAULT_COLOR);
+  });
+});
+
+describe('vurgu renkleri', () => {
+  it('kimlikler benzersiz ve tonları tam', () => {
+    const ids = ACCENTS.map((a) => a.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const a of ACCENTS) {
+      expect(a.base).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(a.soft).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+  });
+
+  it('bilinmeyen vurgu varsayılana düşer', () => {
+    expect(accentOf('neon').id).toBe(DEFAULT_ACCENT);
+    expect(isAccentId('pine')).toBe(true);
+    expect(isAccentId('neon')).toBe(false);
+  });
+});
+
+describe('tema', () => {
+  it('üç seçenek vardır', () => {
+    expect(THEMES).toEqual(['system', 'light', 'dark']);
+    expect(isTheme('dark')).toBe(true);
+    expect(isTheme('sepia')).toBe(false);
+  });
+
+  it('açık ve koyu seçimi cihaz tercihini ezer', () => {
+    expect(resolveTheme('light', true)).toBe('light');
+    expect(resolveTheme('dark', false)).toBe('dark');
+  });
+
+  it('sistem seçildiyse cihaza uyar', () => {
+    expect(resolveTheme('system', true)).toBe('dark');
+    expect(resolveTheme('system', false)).toBe('light');
+  });
+
+  it('her renkte iki zemin tonu vardır', () => {
+    for (const c of [...PALETTE, SLATE]) {
+      expect(tintFor(c, 'light')).toBe(c.tint);
+      expect(tintFor(c, 'dark')).toBe(c.tintDark);
+    }
   });
 });

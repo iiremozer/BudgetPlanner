@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
 import { goalProgress, savedForGoal } from '../lib/savings.js';
 import { milestoneProgress } from '../lib/milestones.js';
-import { PALETTE, SLATE, colorOf, colorForEmoji } from '../lib/colors.js';
+import { PALETTE, SLATE, colorOf, colorForEmoji, tintFor } from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
 import Jar from './Jar.jsx';
 import Contributors from './Contributors.jsx';
+import GoalEditor from './GoalEditor.jsx';
 import { newFromOthers } from '../lib/contributions.js';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
@@ -46,6 +47,8 @@ export default function GoalList({
   onJoin,
   onSyncNow,
   seen,
+  theme,
+  onEdit,
   generalName,
   onRenameGeneral,
 }) {
@@ -54,6 +57,7 @@ export default function GoalList({
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [copied, setCopied] = useState(null);
+  const [editing, setEditing] = useState(null);
   const [renaming, setRenaming] = useState(false);
   const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
@@ -137,8 +141,10 @@ export default function GoalList({
         return (
           <article
             key={goal.id}
-            className={`goal goal-tinted${p.complete ? ' goal-done' : ''}`}
-            style={{ '--tone': tone.base, '--tone-tint': tone.tint }}
+            className={`goal goal-tinted goal-rank-${Math.min(index, 3)}${
+              p.complete ? ' goal-done' : ''
+            }`}
+            style={{ '--tone': tone.base, '--tone-tint': tintFor(tone, theme) }}
           >
             <Jar
               ratio={p.ratio}
@@ -187,7 +193,7 @@ export default function GoalList({
                   currency={currency}
                   myName={memberName}
                   seenAt={seen?.[goal.id]}
-                  tone={tone}
+                  tone={{ ...tone, tint: tintFor(tone, theme) }}
                 />
               ) : null}
 
@@ -217,10 +223,29 @@ export default function GoalList({
                 >
                   {goal.share ? '👥 Shared' : '👥 Share'}
                 </button>
+                <button
+                  type="button"
+                  className="link"
+                  onClick={() => setEditing(editing === goal.id ? null : goal.id)}
+                >
+                  {editing === goal.id ? 'Close' : 'Edit'}
+                </button>
                 <button type="button" className="link" onClick={() => onRemove(goal.id)}>
                   Remove
                 </button>
               </div>
+
+              {editing === goal.id ? (
+                <GoalEditor
+                  goal={goal}
+                  currency={currency}
+                  onSave={(changes) => {
+                    onEdit(goal.id, changes);
+                    setEditing(null);
+                  }}
+                  onCancel={() => setEditing(null)}
+                />
+              ) : null}
 
               {openShare === goal.id ? (
                 goal.share ? (
@@ -295,7 +320,7 @@ export default function GoalList({
         return (
           <article
             className={`goal goal-tinted${goals.length ? ' goal-general' : ''}`}
-            style={{ '--tone': SLATE.base, '--tone-tint': SLATE.tint }}
+            style={{ '--tone': SLATE.base, '--tone-tint': tintFor(SLATE, theme) }}
           >
             <Jar ratio={p.ratio} emoji="💰" id="general" color={SLATE} />
 
