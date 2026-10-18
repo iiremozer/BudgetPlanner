@@ -180,23 +180,83 @@ export default function App() {
 
   // Ayarlarda sol kenardan sağa kaydırmak geri gitmek demek — iOS'ta
   // insanların elinde zaten olan hareket.
-  const edgeSwipe = useRef(null);
+  //
+  // Dinleyiciler pencereye bağlı, panelin kendisine değil: ekranın en solundaki
+  // birkaç piksel sayfa kenar boşluğuna düşüyor ve insan tam oradan başlıyor.
+  // Panele bağlı olsaydı o dokunuş hiç görünmezdi.
+  //
+  // Karar parmak hareket ederken verilir, kaldırıldığında değil: yatay bir
+  // sürüklemede iOS touchend yerine touchcancel yollayabiliyor.
+  const settingsRef = useRef(null);
 
-  function onSettingsTouchStart(e) {
-    const x = e.touches[0].clientX;
-    edgeSwipe.current = x <= 44 ? { x, y: e.touches[0].clientY } : null;
-  }
+  useEffect(() => {
+    if (!settingsOpen) return undefined;
 
-  function onSettingsTouchEnd(e) {
-    const start = edgeSwipe.current;
-    edgeSwipe.current = null;
-    if (!start) return;
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - start.x;
-    const dy = Math.abs(touch.clientY - start.y);
-    // Yatay hareket dikeyden belirgin şekilde fazlaysa geri say.
-    if (dx > 70 && dy < 60) setSettingsOpen(false);
-  }
+    let start = null; // kenardan başlayan dokunuş
+    let active = false; // yatay olduğu anlaşıldı, paneli sürüklüyoruz
+
+    function place(dx, animate) {
+      const node = settingsRef.current;
+      if (!node) return;
+      node.style.transition = animate ? 'transform 160ms ease-out' : 'none';
+      node.style.transform = dx > 0 ? `translateX(${dx}px)` : '';
+    }
+
+    function onStart(e) {
+      if (e.touches.length !== 1) {
+        start = null;
+        return;
+      }
+      const touch = e.touches[0];
+      start = touch.clientX <= 40 ? { x: touch.clientX, y: touch.clientY } : null;
+      active = false;
+    }
+
+    function onMove(e) {
+      if (!start || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - start.x;
+      const dy = Math.abs(touch.clientY - start.y);
+
+      if (!active) {
+        // Dikey niyet belliyse bırak, sayfa normal kaydırsın.
+        if (dy > 24 && dy > dx) {
+          start = null;
+          return;
+        }
+        if (dx < 10) return;
+        active = true;
+      }
+
+      place(dx, false);
+
+      if (dx > 72) {
+        start = null;
+        active = false;
+        place(0, false);
+        setSettingsOpen(false);
+      }
+    }
+
+    function onEnd() {
+      // Eşiğe varmadan bırakıldı: panel yerine kaysın.
+      if (active) place(0, true);
+      start = null;
+      active = false;
+    }
+
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd, { passive: true });
+    window.addEventListener('touchcancel', onEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onStart);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onEnd);
+      place(0, false);
+    };
+  }, [settingsOpen]);
 
   // Sayfayı aşağı çekince yenile.
   function onTouchStart(e) {
@@ -481,11 +541,7 @@ export default function App() {
       <Masthead onOpenSettings={() => setSettingsOpen(true)} />
 
       {settingsOpen ? (
-        <div
-          className="settings-view panel"
-          onTouchStart={onSettingsTouchStart}
-          onTouchEnd={onSettingsTouchEnd}
-        >
+        <div className="settings-view panel" ref={settingsRef}>
         <Settings
           member={state.member}
           currency={state.currency}

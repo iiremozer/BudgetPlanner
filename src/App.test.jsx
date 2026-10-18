@@ -765,34 +765,77 @@ describe('ayarlardan çıkış', () => {
   });
 
   it('sol kenardan sağa kaydırmak kapatır', () => {
-    const { container } = render(<App />);
+    render(<App />);
     fireEvent.click(screen.getByLabelText('Settings'));
-    const view = container.querySelector('.settings-view');
 
-    fireEvent.touchStart(view, { touches: [{ clientX: 10, clientY: 300 }] });
-    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 140, clientY: 310 }] });
+    fireEvent.touchStart(window, { touches: [{ clientX: 6, clientY: 300 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 40, clientY: 304 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 100, clientY: 308 }] });
 
     expect(screen.queryByText('Settings')).toBeNull();
   });
 
-  it('ekranın ortasından kaydırmak kapatmaz', () => {
-    const { container } = render(<App />);
+  it('parmak kalkmadan, hareketin ortasında kapanır', () => {
+    render(<App />);
     fireEvent.click(screen.getByLabelText('Settings'));
-    const view = container.querySelector('.settings-view');
 
-    fireEvent.touchStart(view, { touches: [{ clientX: 200, clientY: 300 }] });
-    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 330, clientY: 310 }] });
+    fireEvent.touchStart(window, { touches: [{ clientX: 4, clientY: 200 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 120, clientY: 206 }] });
+    // touchend hiç gelmedi; iOS yatay sürüklemede touchcancel yollayabiliyor.
+    fireEvent.touchCancel(window, { changedTouches: [{ clientX: 120, clientY: 206 }] });
+
+    expect(screen.queryByText('Settings')).toBeNull();
+  });
+
+  it('eşiğe varmadan bırakmak kapatmaz', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+
+    fireEvent.touchStart(window, { touches: [{ clientX: 8, clientY: 300 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 50, clientY: 302 }] });
+    fireEvent.touchEnd(window, { changedTouches: [{ clientX: 50, clientY: 302 }] });
+
+    expect(screen.getByText('Settings')).toBeTruthy();
+  });
+
+  it('ekranın ortasından kaydırmak kapatmaz', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+
+    fireEvent.touchStart(window, { touches: [{ clientX: 200, clientY: 300 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 280, clientY: 304 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 340, clientY: 308 }] });
 
     expect(screen.getByText('Settings')).toBeTruthy();
   });
 
   it('dikey kaydırma kapatmaz', () => {
-    const { container } = render(<App />);
+    render(<App />);
     fireEvent.click(screen.getByLabelText('Settings'));
-    const view = container.querySelector('.settings-view');
 
-    fireEvent.touchStart(view, { touches: [{ clientX: 12, clientY: 200 }] });
-    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 95, clientY: 480 }] });
+    fireEvent.touchStart(window, { touches: [{ clientX: 12, clientY: 200 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 20, clientY: 260 }] });
+    fireEvent.touchMove(window, { touches: [{ clientX: 140, clientY: 300 }] });
+
+    expect(screen.getByText('Settings')).toBeTruthy();
+  });
+
+  it('iki parmakla kaydırmak kapatmaz', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+
+    fireEvent.touchStart(window, {
+      touches: [
+        { clientX: 10, clientY: 300 },
+        { clientX: 180, clientY: 320 },
+      ],
+    });
+    fireEvent.touchMove(window, {
+      touches: [
+        { clientX: 120, clientY: 302 },
+        { clientX: 290, clientY: 322 },
+      ],
+    });
 
     expect(screen.getByText('Settings')).toBeTruthy();
   });
