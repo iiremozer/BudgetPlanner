@@ -81,6 +81,12 @@ npm run sync         # web'i derler, native projelere kopyalar
 
 `npm run sync` sonrası Xcode'da tekrar Run demen yeterli.
 
+## Capacitor sürümü
+
+Capacitor 8 kullanılıyor. iOS 27 SDK'sı UIScene yaşam döngüsünü zorunlu
+tutuyor; Capacitor 7'nin şablonunda bu yok ve uygulama açılışta çöküyordu.
+8.x bunu karşılıyor, o yüzden 7'ye dönme.
+
 ## Bundle ID
 
 `app.oursavingsbook.mobile` — bilerek kimsenin adını içermiyor, çünkü
