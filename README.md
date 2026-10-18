@@ -25,13 +25,21 @@ Kayıtlar yalnızca eklenir, bu yüzden iki cihaz çakışmaz: birleştirme kiml
 birleşimidir. Silinen şeyler `deleted` listesinde tutulur ki karşı cihaz onları
 geri diriltmesin.
 
+## Native uygulama
+
+iOS ve Android için Capacitor kullanılıyor; aynı kod hem web'de hem mağazalarda.
+Mac'te kurulum adımları: `NATIVE.md`.
+
 ## Komutlar
 
 ```bash
 npm install     # bağımlılıklar
 npm run dev     # geliştirme sunucusu
 npm test        # testler
-npm run build   # dist/ üretir
+npm run build   # dist/ üretir (GitHub Pages)
+npm run sync    # native derleme + iOS/Android projelerine kopyala
+npm run ios     # Xcode'u açar
+npm run android # Android Studio'yu açar
 ```
 
 ## Yapı

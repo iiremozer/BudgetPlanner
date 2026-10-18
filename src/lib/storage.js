@@ -3,6 +3,7 @@ import { isPeriod, DEFAULT_PERIOD } from './pace.js';
 import { emptyDeleted } from './sync.js';
 import { isColorId, colorForEmoji, isAccentId, DEFAULT_ACCENT, isTheme } from './colors.js';
 import { cleanBankLink } from './banklink.js';
+import { cleanNotificationSettings, defaultNotificationSettings } from './notifications.js';
 
 export const STORAGE_KEY = 'ortak-birikim-defteri:v1';
 
@@ -29,6 +30,7 @@ export function defaultState() {
     celebrated: {},
     theme: 'system',
     accent: DEFAULT_ACCENT,
+    notifications: defaultNotificationSettings(),
   };
 }
 
@@ -171,6 +173,7 @@ export function normalizeState(raw) {
     celebrated: cleanSeen(raw.celebrated),
     theme: isTheme(raw.theme) ? raw.theme : 'system',
     accent: isAccentId(raw.accent) ? raw.accent : DEFAULT_ACCENT,
+    notifications: cleanNotificationSettings(raw.notifications),
   };
 }
 

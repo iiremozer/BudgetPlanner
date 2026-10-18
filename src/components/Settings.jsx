@@ -3,6 +3,7 @@ import { CURRENCIES, CURRENCY_CODES } from '../lib/money.js';
 import { toBackup, fromBackup, backupFilename } from '../lib/backup.js';
 import { normalizeBankLink, hostOf } from '../lib/banklink.js';
 import { ACCENTS, THEMES } from '../lib/colors.js';
+import { isNative, requestNotificationPermission } from '../lib/native.js';
 
 const THEME_LABELS = { system: 'Match phone', light: 'Light', dark: 'Dark' };
 
@@ -20,6 +21,8 @@ export default function Settings({
   accent,
   onSetTheme,
   onSetAccent,
+  notifications,
+  onSetNotifications,
   onClose,
 }) {
   const [name, setName] = useState(member?.name ?? '');
@@ -29,6 +32,7 @@ export default function Settings({
   const [link, setLink] = useState(bankLink?.url ?? '');
   const [linkError, setLinkError] = useState('');
   const [confirmErase, setConfirmErase] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const fileInput = useRef(null);
   const [bank, setBank] = useState(bankLink?.url ?? '');
   const [bankError, setBankError] = useState('');
@@ -117,6 +121,71 @@ export default function Settings({
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <h3 className="card-title">Reminders</h3>
+        </div>
+        <div className="stack">
+          {isNative() ? null : (
+            <p className="hint">
+              Reminders only work in the installed app, not in the browser.
+            </p>
+          )}
+
+          <label className="toggle-row">
+            <span>
+              <span className="toggle-title">Money waiting to be moved</span>
+              <span className="toggle-note">
+                A nudge on Sunday evening if something you logged has sat in your current account
+                for over a week.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={notifications.transfers}
+              onChange={async (e) => {
+                const on = e.target.checked;
+                if (on && !(await requestNotificationPermission())) {
+                  setPermissionDenied(true);
+                  return;
+                }
+                setPermissionDenied(false);
+                onSetNotifications({ ...notifications, transfers: on });
+              }}
+            />
+          </label>
+
+          <label className="toggle-row">
+            <span>
+              <span className="toggle-title">Your week</span>
+              <span className="toggle-note">
+                A Sunday summary of what you put aside. No streak pressure, no guilt.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={notifications.weekly}
+              onChange={async (e) => {
+                const on = e.target.checked;
+                if (on && !(await requestNotificationPermission())) {
+                  setPermissionDenied(true);
+                  return;
+                }
+                setPermissionDenied(false);
+                onSetNotifications({ ...notifications, weekly: on });
+              }}
+            />
+          </label>
+
+          {permissionDenied ? (
+            <p className="error">
+              Notifications are turned off for this app. Turn them on in your phone's settings
+              first.
+            </p>
+          ) : null}
         </div>
       </section>
 

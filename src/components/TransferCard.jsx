@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatMoney, parseAmount, CURRENCIES } from '../lib/money.js';
 import { pendingAmount, daysWaiting, lastTransferAt } from '../lib/transfers.js';
 import { hostOf } from '../lib/banklink.js';
+import { openExternal, isNative } from '../lib/native.js';
 
 export default function TransferCard({ entries, transfers, currency, prompting, bankLink, onConfirm }) {
   const [open, setOpen] = useState(false);
@@ -85,6 +86,12 @@ export default function TransferCard({ entries, transfers, currency, prompting, 
               href={bankLink.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (!isNative()) return;
+                // Native tarafta uygulama içi tarayıcıda açıyoruz.
+                e.preventDefault();
+                openExternal(bankLink.url);
+              }}
             >
               <span>Open my bank</span>
               <span className="bank-host">{hostOf(bankLink)}</span>

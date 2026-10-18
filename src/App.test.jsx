@@ -618,3 +618,30 @@ describe('veri silme', () => {
     expect(screen.queryByText('House')).toBeNull();
   });
 });
+
+describe('bildirim ayarları', () => {
+  it('varsayılan olarak ikisi de kapalıdır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Reminders')).toBeTruthy();
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes).toHaveLength(2);
+    expect(boxes.every((b) => !b.checked)).toBe(true);
+  });
+
+  it('tarayıcıda çalışmadığını söyler', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText(/only work in the installed app/)).toBeTruthy();
+  });
+
+  it('web ortamında izin alınamayınca açılmaz', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    await vi.waitFor(() =>
+      expect(screen.getByText(/Notifications are turned off/)).toBeTruthy()
+    );
+    expect(screen.getAllByRole('checkbox')[0].checked).toBe(false);
+  });
+});

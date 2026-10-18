@@ -3,3 +3,14 @@ dist/
 .DS_Store
 *.local
 .vite/
+
+# Capacitor native projects derive from the web build; Pods and
+# build output stay out of the repo.
+ios/App/Pods/
+ios/App/App/public/
+ios/App/build/
+android/app/src/main/assets/public/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties

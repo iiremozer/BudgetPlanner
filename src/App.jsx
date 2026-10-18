@@ -8,7 +8,7 @@ import StreakTab from './components/StreakTab.jsx';
 import TransferCard from './components/TransferCard.jsx';
 import Celebration from './components/Celebration.jsx';
 import TabBar from './components/TabBar.jsx';
-import { loadState, saveState, makeId, defaultState } from './lib/storage.js';
+import { loadState, saveState, makeId, defaultState, normalizeState } from './lib/storage.js';
 import { totalSaved, currentStreak } from './lib/savings.js';
 import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
@@ -17,6 +17,14 @@ import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
 import { resolveTheme, accentOf } from './lib/colors.js';
+import { planNotifications } from './lib/notifications.js';
+import {
+  isNative,
+  tapFeedback,
+  mirrorToDevice,
+  readFromDevice,
+  applyNotificationPlan,
+} from './lib/native.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, deleteBook, isRemoteConfigured } from './lib/remote.js';
 
@@ -65,7 +73,36 @@ export default function App() {
   useEffect(() => {
     stateRef.current = state;
     saveState(state);
+    // Tarayıcı deposu işletim sistemi tarafından temizlenebiliyor;
+    // native tarafta ikinci bir kopya tutuyoruz.
+    mirrorToDevice(JSON.stringify(state));
   }, [state]);
+
+  // Açılışta yerel depo boşsa native kopyadan geri yükle.
+  useEffect(() => {
+    if (!isNative()) return;
+    let cancelled = false;
+    (async () => {
+      const current = stateRef.current;
+      if (current.entries.length > 0 || current.goals.length > 0) return;
+      const saved = await readFromDevice();
+      if (!saved || cancelled) return;
+      try {
+        setState(normalizeState(JSON.parse(saved)));
+      } catch {
+        // Bozuk kopya varsa boş defterle devam ediyoruz.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Bildirim planı her değişiklikte baştan kurulur.
+  useEffect(() => {
+    if (!isNative()) return;
+    applyNotificationPlan(planNotifications(state));
+  }, [state.notifications, state.entries, state.transfers, state.currency]);
 
   useEffect(() => () => clearTimeout(burstTimer.current), []);
 
@@ -230,7 +267,7 @@ export default function App() {
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
     setBurst(entry);
     setJustAdded(entry);
-    if (navigator.vibrate) navigator.vibrate(18);
+    tapFeedback();
     clearTimeout(burstTimer.current);
     burstTimer.current = setTimeout(() => setBurst(null), BURST_MS);
   }
@@ -402,6 +439,8 @@ export default function App() {
           accent={state.accent}
           onSetTheme={(value) => setState((prev) => ({ ...prev, theme: value }))}
           onSetAccent={(value) => setState((prev) => ({ ...prev, accent: value }))}
+          notifications={state.notifications}
+          onSetNotifications={(value) => setState((prev) => ({ ...prev, notifications: value }))}
           onSetName={(name) =>
             setState((prev) => ({
               ...prev,

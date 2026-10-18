@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatMoney } from '../lib/money.js';
 import { goalSummary, shareText } from '../lib/celebration.js';
 import { colorOf } from '../lib/colors.js';
+import { shareText as shareNative, isNative } from '../lib/native.js';
 import Jar from './Jar.jsx';
 
 const CONFETTI = Array.from({ length: 14 }, (_, i) => i);
@@ -13,16 +14,12 @@ export default function Celebration({ goal, entries, currency, myName, onClose }
 
   async function share() {
     const text = shareText(goal, summary, currency);
-    try {
-      if (navigator.share) {
-        await navigator.share({ text });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text);
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
-      }
-    } catch {
-      // Paylaşımdan vazgeçilmesi hata değil; sessizce geçiyoruz.
+    const done = await shareNative(text);
+    // Native paylaşım sayfası kendi geri bildirimini verir; webde panoya
+    // kopyalandığını söylememiz gerekiyor.
+    if (done && !isNative() && !navigator.share) {
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
     }
   }
 

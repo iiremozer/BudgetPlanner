@@ -1,0 +1,13 @@
+{
+  "appId": "com.iiremozer.savingsbook",
+  "appName": "Savings Book",
+  "webDir": "dist",
+  "ios": { "contentInset": "always" },
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#1e3a34"
+    }
+  }
+}
