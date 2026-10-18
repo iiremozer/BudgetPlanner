@@ -25,6 +25,7 @@ import {
   readFromDevice,
   applyNotificationPlan,
   setStatusBarStyle,
+  onBackButton,
 } from './lib/native.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, deleteBook, isRemoteConfigured } from './lib/remote.js';
@@ -165,6 +166,37 @@ export default function App() {
       document.removeEventListener('visibilitychange', onWake);
     };
   }, [hasShared, sync]);
+
+  // Android'in geri tuşu: önce ayarları kapatır, sonra Save sekmesine döner.
+  useEffect(() => {
+    return onBackButton(() => {
+      if (settingsOpen) {
+        setSettingsOpen(false);
+        return;
+      }
+      setTab((current) => (current === 'save' ? current : 'save'));
+    });
+  }, [settingsOpen]);
+
+  // Ayarlarda sol kenardan sağa kaydırmak geri gitmek demek — iOS'ta
+  // insanların elinde zaten olan hareket.
+  const edgeSwipe = useRef(null);
+
+  function onSettingsTouchStart(e) {
+    const x = e.touches[0].clientX;
+    edgeSwipe.current = x <= 44 ? { x, y: e.touches[0].clientY } : null;
+  }
+
+  function onSettingsTouchEnd(e) {
+    const start = edgeSwipe.current;
+    edgeSwipe.current = null;
+    if (!start) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = Math.abs(touch.clientY - start.y);
+    // Yatay hareket dikeyden belirgin şekilde fazlaysa geri say.
+    if (dx > 70 && dy < 60) setSettingsOpen(false);
+  }
 
   // Sayfayı aşağı çekince yenile.
   function onTouchStart(e) {
@@ -449,6 +481,11 @@ export default function App() {
       <Masthead onOpenSettings={() => setSettingsOpen(true)} />
 
       {settingsOpen ? (
+        <div
+          className="settings-view panel"
+          onTouchStart={onSettingsTouchStart}
+          onTouchEnd={onSettingsTouchEnd}
+        >
         <Settings
           member={state.member}
           currency={state.currency}
@@ -479,6 +516,7 @@ export default function App() {
           }}
           onClose={() => setSettingsOpen(false)}
         />
+        </div>
       ) : (
         <>
 

@@ -10,6 +10,7 @@ import { Browser } from '@capacitor/browser';
 import { Preferences } from '@capacitor/preferences';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { App as CapApp } from '@capacitor/app';
 
 export const DEVICE_BACKUP_KEY = 'book-backup';
 
@@ -150,4 +151,19 @@ export async function setStatusBarStyle() {
   } catch {
     // Android'de veya eski sürümlerde desteklenmeyebilir.
   }
+}
+
+/**
+ * Android'in donanım geri tuşu. Dönen fonksiyon dinleyiciyi kaldırır.
+ * iOS'ta geri tuşu yok, orada kenardan kaydırma iş görüyor.
+ */
+export function onBackButton(handler) {
+  if (!isNative()) return () => {};
+  let remove = () => {};
+  CapApp.addListener('backButton', handler)
+    .then((listener) => {
+      remove = () => listener.remove();
+    })
+    .catch(() => {});
+  return () => remove();
 }

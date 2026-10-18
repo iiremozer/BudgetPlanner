@@ -747,3 +747,53 @@ describe('paylaşımı sunucudan silerken hata', () => {
     expect(screen.queryByText(/could not be removed/)).toBeNull();
   });
 });
+
+describe('ayarlardan çıkış', () => {
+  it('üstte ve altta iki çıkış vardır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText('Done')).toBeTruthy();
+    expect(screen.getByText('Close settings')).toBeTruthy();
+  });
+
+  it('alttaki düğme de kapatır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Close settings'));
+    expect(screen.queryByText('Settings')).toBeNull();
+    expect(screen.getByText('What did you skip?')).toBeTruthy();
+  });
+
+  it('sol kenardan sağa kaydırmak kapatır', () => {
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    const view = container.querySelector('.settings-view');
+
+    fireEvent.touchStart(view, { touches: [{ clientX: 10, clientY: 300 }] });
+    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 140, clientY: 310 }] });
+
+    expect(screen.queryByText('Settings')).toBeNull();
+  });
+
+  it('ekranın ortasından kaydırmak kapatmaz', () => {
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    const view = container.querySelector('.settings-view');
+
+    fireEvent.touchStart(view, { touches: [{ clientX: 200, clientY: 300 }] });
+    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 330, clientY: 310 }] });
+
+    expect(screen.getByText('Settings')).toBeTruthy();
+  });
+
+  it('dikey kaydırma kapatmaz', () => {
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    const view = container.querySelector('.settings-view');
+
+    fireEvent.touchStart(view, { touches: [{ clientX: 12, clientY: 200 }] });
+    fireEvent.touchEnd(view, { changedTouches: [{ clientX: 95, clientY: 480 }] });
+
+    expect(screen.getByText('Settings')).toBeTruthy();
+  });
+});

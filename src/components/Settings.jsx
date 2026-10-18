@@ -400,6 +400,10 @@ export default function Settings({
           )}
         </div>
       </section>
+
+      <button type="button" className="btn btn-ghost settings-close" onClick={onClose}>
+        Close settings
+      </button>
     </>
   );
 }
