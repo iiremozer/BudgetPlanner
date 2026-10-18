@@ -1,9 +1,13 @@
 {
-  "appId": "com.iiremozer.savingsbook",
+  "appId": "app.oursavingsbook.mobile",
   "appName": "Savings Book",
   "webDir": "dist",
-  "ios": { "contentInset": "always" },
-  "android": { "allowMixedContent": false },
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_icon",

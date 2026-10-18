@@ -41,6 +41,13 @@ npm run sync         # web'i derler, native projelere kopyalar
 
 `npm run sync` sonrası Xcode'da tekrar Run demen yeterli.
 
+## Bundle ID
+
+`app.oursavingsbook.mobile` — bilerek kimsenin adını içermiyor, çünkü
+yayınlayacak hesap henüz belli değil. Bir kez App Store'da uygulama kaydı
+açıldıktan sonra değiştirilemiyor, o yüzden ilk yüklemeden önce son hali
+verilmeli.
+
 ## Neden iki ayrı derleme var
 
 `npm run build` GitHub Pages için, adresler `/BudgetPlanner/` altında.
