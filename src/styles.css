@@ -10,6 +10,9 @@
   --pine: #1e3a34;
   --pine-soft: #2c534a;
   --on-pine: #ffffff;
+  --fill: #1e3a34;
+  --on-fill: #ffffff;
+  --accent: #1e3a34;
   --honey: #e0a42e;
   --mint: #2f8f6f;
   --danger: #b4442f;
@@ -33,6 +36,8 @@
   --on-pine: #ffffff;
   --honey: #f0bc55;
   --mint: #55c49f;
+  --fill: #7cc4af;
+  --on-fill: #10151a;
   --danger: #e38170;
   --jar-glass: #2a3036;
   --jar-lid: #3b434a;
@@ -268,9 +273,9 @@ select {
 }
 
 .tile[aria-pressed='true'] {
-  background: var(--pine);
-  border-color: var(--pine);
-  color: #fff;
+  background: var(--fill);
+  border-color: var(--fill);
+  color: var(--on-fill);
 }
 
 .tile-emoji {
@@ -309,8 +314,8 @@ select {
 .btn {
   width: 100%;
   padding: 15px;
-  background: var(--pine);
-  color: var(--on-pine);
+  background: var(--fill);
+  color: var(--on-fill);
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -879,8 +884,9 @@ select {
 }
 
 .chip[aria-pressed='true'] {
-  background: var(--tone, var(--pine));
-  border-color: var(--tone, var(--pine));
+  background: var(--tone, var(--fill));
+  border-color: var(--tone, var(--fill));
+  color: var(--on-fill);
 }
 
 .row-icon {
@@ -928,15 +934,15 @@ select {
 }
 
 .tab[aria-current='page'] {
-  background: var(--pine);
-  color: var(--on-pine);
+  background: var(--fill);
+  color: var(--on-fill);
   font-weight: 600;
 }
 
 .tab-badge {
   position: absolute;
-  top: 3px;
-  right: 12px;
+  top: 2px;
+  right: 10px;
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
@@ -1483,4 +1489,85 @@ select {
   width: 22px;
   height: 22px;
   accent-color: var(--pine);
+}
+
+/* ---------- native his ---------- */
+
+/* Metin seçimi, dokunma vurgusu ve uzun basma menüsü bir web sayfasını
+   ele veren şeyler. Girdi alanlarında seçim açık kalıyor. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior-y: contain;
+}
+
+input,
+textarea,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Sekme değişimi anlık değil, kısa bir geçişle. */
+.panel {
+  animation: panel-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- ikonlu sekme çubuğu ---------- */
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 7px 4px 5px;
+}
+
+.tab-icon {
+  display: grid;
+  place-items: center;
+  height: 24px;
+}
+
+.tab-label {
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+
+.tab[aria-current='page'] {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Seçili sekmenin altında ince bir işaret; dolu blok yerine daha sakin. */
+.tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tabbar {
+  gap: 0;
+  padding-top: 6px;
 }

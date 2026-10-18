@@ -3,7 +3,7 @@
   "appName": "Savings Book",
   "webDir": "dist",
   "ios": {
-    "contentInset": "always"
+    "contentInset": "never"
   },
   "android": {
     "allowMixedContent": false
@@ -12,6 +12,10 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_icon",
       "iconColor": "#1e3a34"
+    },
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "DARK"
     }
   }
 }

@@ -14,6 +14,7 @@ import {
   isTheme,
   resolveTheme,
   tintFor,
+  accentRoles,
 } from './colors.js';
 
 describe('palet', () => {
@@ -101,6 +102,35 @@ describe('tema', () => {
     for (const c of [...PALETTE, SLATE]) {
       expect(tintFor(c, 'light')).toBe(c.tint);
       expect(tintFor(c, 'dark')).toBe(c.tintDark);
+    }
+  });
+});
+
+describe('accentRoles', () => {
+  const pine = accentOf('pine');
+
+  it('açık temada geniş yüzey koyu, yazı beyazdır', () => {
+    const r = accentRoles(pine, 'light');
+    expect(r.surface).toBe(pine.base);
+    expect(r.onSurface).toBe('#ffffff');
+    expect(r.onFill).toBe('#ffffff');
+  });
+
+  it('koyu temada dokunulabilir zemin parlar, yazı koyulaşır', () => {
+    const r = accentRoles(pine, 'dark');
+    expect(r.fill).toBe(pine.soft);
+    expect(r.onFill).not.toBe('#ffffff');
+  });
+
+  it('koyu temada geniş yüzey base değil, ayrı bir ton kullanır', () => {
+    expect(accentRoles(pine, 'dark').surface).toBe(pine.surface);
+  });
+
+  it('her vurgu rengi üç tonu da taşır', () => {
+    for (const a of ACCENTS) {
+      for (const key of ['base', 'soft', 'surface']) {
+        expect(a[key]).toMatch(/^#[0-9a-f]{6}$/i);
+      }
     }
   });
 });

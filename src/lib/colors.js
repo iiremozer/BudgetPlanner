@@ -23,16 +23,34 @@ export const SLATE = {
   tintDark: '#22282e',
 };
 
-// Uygulamanın ana rengi. Koyu zeminde beyaz yazı okunsun diye hepsi doygun
-// ve koyu; `soft` tonu karanlık temada vurgu metni ve kenarlıklar için.
+// Uygulamanın ana rengi, üç role ayrılmış durumda:
+//   base    — açık temada geniş yüzey (üst blok, düğmeler), üstünde beyaz yazı
+//   soft    — koyu temada doygun vurgu: düğme zemini, seçili sekme, önemli sayı
+//   surface — koyu temada geniş yüzey. Zeminden açık ve rengi belli olacak
+//             kadar tonlu; base'i koyu temada kullanmak her şeyi çamura çeviriyor.
 export const ACCENTS = [
-  { id: 'pine',   name: 'Pine',   base: '#1e3a34', soft: '#6fb3a0' },
-  { id: 'navy',   name: 'Navy',   base: '#1f3350', soft: '#7aa6dd' },
-  { id: 'plum',   name: 'Plum',   base: '#452a46', soft: '#c08fc4' },
-  { id: 'ember',  name: 'Ember',  base: '#5a2f23', soft: '#e0937c' },
-  { id: 'ink',    name: 'Ink',    base: '#262a30', soft: '#a9b4c0' },
-  { id: 'olive',  name: 'Olive',  base: '#3a3f22', soft: '#b3bd77' },
+  { id: 'pine',  name: 'Pine',  base: '#1e3a34', soft: '#7cc4af', surface: '#1b3a33' },
+  { id: 'navy',  name: 'Navy',  base: '#1f3350', soft: '#8ab4ea', surface: '#1d3151' },
+  { id: 'plum',  name: 'Plum',  base: '#452a46', soft: '#d09dd4', surface: '#3d2740' },
+  { id: 'ember', name: 'Ember', base: '#5a2f23', soft: '#ec9e85', surface: '#4a2a20' },
+  { id: 'ink',   name: 'Ink',   base: '#262a30', soft: '#b6c2cf', surface: '#262c34' },
+  { id: 'olive', name: 'Olive', base: '#3a3f22', soft: '#c3cd83', surface: '#343a20' },
 ];
+
+/** Bir vurgu renginin o temadaki rolleri. */
+export function accentRoles(accent, theme) {
+  const dark = theme === 'dark';
+  return {
+    // Geniş yüzey ve üstündeki yazı
+    surface: dark ? accent.surface : accent.base,
+    onSurface: '#ffffff',
+    // Dokunulabilir öğeler: koyu temada parlak zemin + koyu yazı okunaklı olan
+    fill: dark ? accent.soft : accent.base,
+    onFill: dark ? '#10151a' : '#ffffff',
+    // Vurgu metni ve kenarlıklar
+    bright: dark ? accent.soft : accent.base,
+  };
+}
 
 export const DEFAULT_ACCENT = 'pine';
 

@@ -9,6 +9,7 @@ import { Share } from '@capacitor/share';
 import { Browser } from '@capacitor/browser';
 import { Preferences } from '@capacitor/preferences';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 export const DEVICE_BACKUP_KEY = 'book-backup';
 
@@ -134,5 +135,19 @@ export async function applyNotificationPlan(plan = []) {
     return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Durum çubuğundaki saat ve simgelerin rengi. Koyu temada açık, açık temada
+ * da açık — çünkü üstteki blok her iki temada da koyu bir yüzey.
+ */
+export async function setStatusBarStyle() {
+  if (!isNative()) return;
+  try {
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setOverlaysWebView({ overlay: true });
+  } catch {
+    // Android'de veya eski sürümlerde desteklenmeyebilir.
   }
 }

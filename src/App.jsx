@@ -16,7 +16,7 @@ import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
-import { resolveTheme, accentOf } from './lib/colors.js';
+import { resolveTheme, accentOf, accentRoles } from './lib/colors.js';
 import { planNotifications } from './lib/notifications.js';
 import {
   isNative,
@@ -24,6 +24,7 @@ import {
   mirrorToDevice,
   readFromDevice,
   applyNotificationPlan,
+  setStatusBarStyle,
 } from './lib/native.js';
 import { moveGoal, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, deleteBook, isRemoteConfigured } from './lib/remote.js';
@@ -219,12 +220,18 @@ export default function App() {
 
   useEffect(() => {
     const root = document.documentElement;
+    const roles = accentRoles(accent, theme);
     root.dataset.theme = theme;
-    root.style.setProperty('--pine', accent.base);
-    root.style.setProperty('--pine-soft', theme === 'dark' ? accent.soft : accent.base);
+    root.style.setProperty('--pine', roles.surface);
+    root.style.setProperty('--on-pine', roles.onSurface);
+    root.style.setProperty('--fill', roles.fill);
+    root.style.setProperty('--on-fill', roles.onFill);
+    root.style.setProperty('--accent', roles.bright);
+    root.style.setProperty('--pine-soft', roles.bright);
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'dark' ? '#121518' : accent.base);
+      ?.setAttribute('content', roles.surface);
+    setStatusBarStyle(theme);
   }, [theme, accent]);
 
   const total = useMemo(() => totalSaved(state.entries), [state.entries]);
@@ -464,7 +471,7 @@ export default function App() {
         <>
 
       {tab === 'save' ? (
-        <>
+        <div className="panel">
           <section className="hero">
             <p className="hero-label">Total saved</p>
             <p className={`hero-amount${burst ? ' is-bumped' : ''}`}>
@@ -519,11 +526,11 @@ export default function App() {
               </button>
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
 
       {tab === 'goals' ? (
-        <>
+        <div className="panel">
           <GoalList
             goals={state.goals}
             entries={state.entries}
@@ -547,10 +554,11 @@ export default function App() {
             }
           />
 
-        </>
+        </div>
       ) : null}
 
       {tab === 'history' ? (
+        <div className="panel">
         <StreakTab entries={state.entries} currency={state.currency}>
           <TransferCard
             entries={state.entries}
@@ -570,6 +578,7 @@ export default function App() {
             onReassign={reassignEntry}
           />
         </StreakTab>
+        </div>
       ) : null}
 
       <p className="footnote">

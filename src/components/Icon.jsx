@@ -110,6 +110,25 @@ const PATHS = {
       <path d="M8.4 20h7.2M12 16.6V20" />
     </>
   ),
+  // Sekme çubuğu ikonları
+  tabSave: (
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <path d="M12 8.2v7.6M8.2 12h7.6" />
+    </>
+  ),
+  tabGoals: (
+    <>
+      <path d="M8 4.4h8v2.2c0 1.7 2.4 2.6 2.4 5.2v6.3a1.5 1.5 0 0 1-1.5 1.5H7.1a1.5 1.5 0 0 1-1.5-1.5v-6.3c0-2.6 2.4-3.5 2.4-5.2z" />
+      <path d="M5.9 14.4c2.1.9 4.1-.9 6.1 0s4-.9 6-0" />
+    </>
+  ),
+  tabHistory: (
+    <>
+      <circle cx="12" cy="12" r="8.2" />
+      <path d="M12 7.3V12l3.2 1.9" />
+    </>
+  ),
   coins: (
     <>
       <ellipse cx="12" cy="7" rx="7.4" ry="3.1" />

@@ -645,3 +645,49 @@ describe('bildirim ayarları', () => {
     expect(screen.getAllByRole('checkbox')[0].checked).toBe(false);
   });
 });
+
+describe('sekme çubuğu', () => {
+  it('her sekmenin ikonu vardır', () => {
+    const { container } = render(<App />);
+    expect(container.querySelectorAll('.tab .tab-icon svg')).toHaveLength(3);
+  });
+
+  it('seçili sekme işaretlenir', () => {
+    const { container } = render(<App />);
+    const [save, , history] = container.querySelectorAll('.tab');
+    expect(save.getAttribute('aria-current')).toBe('page');
+
+    fireEvent.click(history);
+    expect(save.getAttribute('aria-current')).toBeNull();
+    expect(history.getAttribute('aria-current')).toBe('page');
+  });
+});
+
+describe('vurgu rolleri', () => {
+  it('koyu temada dolgu rengi açık, üstündeki yazı koyu olur', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Dark'));
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue('--fill')).toBe('#7cc4af');
+    expect(style.getPropertyValue('--on-fill')).toBe('#10151a');
+  });
+
+  it('açık temada dolgu koyu, yazı beyazdır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Light'));
+
+    const style = document.documentElement.style;
+    expect(style.getPropertyValue('--fill')).toBe('#1e3a34');
+    expect(style.getPropertyValue('--on-fill')).toBe('#ffffff');
+  });
+
+  it('koyu temada geniş yüzey ayrı bir ton kullanır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Dark'));
+    expect(document.documentElement.style.getPropertyValue('--pine')).toBe('#1b3a33');
+  });
+});

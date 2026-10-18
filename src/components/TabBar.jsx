@@ -1,7 +1,9 @@
+import Icon from './Icon.jsx';
+
 const TABS = [
-  { id: 'save', label: 'Save' },
-  { id: 'goals', label: 'Goals' },
-  { id: 'history', label: 'History' },
+  { id: 'save', label: 'Save', icon: 'tabSave' },
+  { id: 'goals', label: 'Goals', icon: 'tabGoals' },
+  { id: 'history', label: 'History', icon: 'tabHistory' },
 ];
 
 export default function TabBar({ active, onChange, badge, goalsDot }) {
@@ -15,6 +17,9 @@ export default function TabBar({ active, onChange, badge, goalsDot }) {
           aria-current={active === tab.id ? 'page' : undefined}
           onClick={() => onChange(tab.id)}
         >
+          <span className="tab-icon">
+            <Icon name={tab.icon} size={23} strokeWidth={active === tab.id ? 2 : 1.7} />
+          </span>
           <span className="tab-label">{tab.label}</span>
           {tab.id === 'history' && badge > 0 ? <span className="tab-badge">{badge}</span> : null}
           {tab.id === 'goals' && goalsDot ? <span className="tab-dot" /> : null}
