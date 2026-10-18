@@ -8,11 +8,50 @@ cd BudgetPlanner
 npm install
 ```
 
-## Gerekenler
+## Sıfırdan Mac kurulumu
 
-- **Xcode** (App Store'dan, ~10 GB) ve bir kez `xcode-select --install`
-- **CocoaPods**: `sudo gem install cocoapods`
-- Android için: **Android Studio**
+Yeni bir Mac'te sırayla:
+
+1. **Yer aç.** Xcode indirme sırasında ~40 GB istiyor.
+   Apple menüsü → System Settings → General → Storage.
+
+2. **Xcode'u kur.** App Store → "Xcode" ara → Get. İndirme 10 GB'ın
+   üstünde, bağlantına göre 30 dakika ile birkaç saat sürebiliyor.
+   İlerleme çubuğu uzun süre kıpırdamasa da normal.
+
+3. **Xcode'u bir kez aç.** Lisansı kabul et, ek bileşenleri kurmasına
+   izin ver, Mac şifreni ister. Sonra kapatabilirsin.
+
+4. **Terminal'i aç.** Cmd+Space → "Terminal" yaz → Enter.
+   Sonraki komutları buraya yapıştırıp Enter'a basacaksın.
+
+5. **Komut satırı araçları:**
+   ```bash
+   xcode-select --install
+   ```
+   Zaten kuruluysa "already installed" der, sorun değil.
+
+6. **Homebrew** (paket yöneticisi):
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+   Şifre ister — yazarken ekranda hiçbir şey görünmez, bu normal, yazıp
+   Enter'a bas. Bittiğinde ekrana "Next steps" diye iki satır yazar;
+   Apple Silicon Mac'lerde **o iki satırı da çalıştırman gerekiyor**,
+   yoksa `brew` komutu bulunamaz. Takılırsan: https://brew.sh
+
+7. **Node ve CocoaPods:**
+   ```bash
+   brew install node cocoapods
+   ```
+
+8. **Kontrol:**
+   ```bash
+   node -v && pod --version && xcodebuild -version
+   ```
+   Üçü de sürüm numarası yazdırıyorsa hazırsın.
+
+Android için ayrıca **Android Studio** gerekiyor; iOS'u bitirdikten sonra.
 
 ## iOS projesini üret
 
