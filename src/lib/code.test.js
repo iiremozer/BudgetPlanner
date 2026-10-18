@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { makeBookCode, normalizeCode, formatCode, CODE_LENGTH } from './code.js';
+import { makeBookCode, normalizeCode, formatCode, inviteText, CODE_LENGTH } from './code.js';
 
 describe('makeBookCode', () => {
   it('doğru uzunlukta kod üretir', () => {
@@ -55,5 +55,23 @@ describe('formatCode', () => {
 
   it('bozuk girdide boş döner', () => {
     expect(formatCode(null)).toBe('');
+  });
+});
+
+describe('inviteText', () => {
+  const code = 'ABCDEFGH2345';
+
+  it('hedefin adını ve okunur kodu taşır', () => {
+    const text = inviteText('Holiday', code);
+    expect(text).toContain('Holiday');
+    expect(text).toContain('ABCD EFGH 2345');
+  });
+
+  it('nereye gireceğini söyler', () => {
+    expect(inviteText('Holiday', code)).toContain('Join a shared goal');
+  });
+
+  it('adsız hedefte de anlamlı kalır', () => {
+    expect(inviteText('   ', code)).toContain('a goal');
   });
 });

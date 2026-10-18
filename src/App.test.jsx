@@ -571,25 +571,44 @@ describe('veri silme', () => {
     );
   }
 
-  it('paylaşımı durdurmak ile silmek ayrı seçeneklerdir', () => {
+  it('panel kod, gönderme ve durdurmadan ibarettir', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
     fireEvent.click(screen.getByText('👥 Shared'));
-    expect(screen.getByText('Stop sharing on this phone')).toBeTruthy();
-    expect(screen.getByText('Delete the shared copy')).toBeTruthy();
+    expect(screen.getByText('ABCD 1234 EFGH')).toBeTruthy();
+    expect(screen.getByText('Send code')).toBeTruthy();
+    expect(screen.getByText('Stop sharing')).toBeTruthy();
   });
 
-  it('silmeden önce onay ister', () => {
+  it('durdurmak iki sonucu da tek adımda sorar', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
     fireEvent.click(screen.getByText('👥 Shared'));
-    fireEvent.click(screen.getByText('Delete the shared copy'));
-    expect(screen.getByText(/cannot be undone/)).toBeTruthy();
+    fireEvent.click(screen.getByText('Stop sharing'));
 
-    fireEvent.click(screen.getByText('Keep it'));
-    expect(screen.queryByText(/cannot be undone/)).toBeNull();
+    expect(screen.getByText('Stop sharing House?')).toBeTruthy();
+    expect(screen.getByText('Just on this phone')).toBeTruthy();
+    expect(screen.getByText('For both of us')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(screen.getByText('Send code')).toBeTruthy();
+  });
+
+  it('bu telefonda durdurmak sunucudaki kopyaya dokunmaz', () => {
+    const fetchMock = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(true) }));
+    vi.stubGlobal('fetch', fetchMock);
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByText('Stop sharing'));
+    fireEvent.click(screen.getByText('Just on this phone'));
+
+    expect(screen.getByText('👥 Share')).toBeTruthy();
+    const deleteCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('book_delete'));
+    expect(deleteCalls).toHaveLength(0);
   });
 
   it('sunucudan silince hedef yerelde kalır ama paylaşımdan çıkar', async () => {
@@ -598,8 +617,8 @@ describe('veri silme', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
     fireEvent.click(screen.getByText('👥 Shared'));
-    fireEvent.click(screen.getByText('Delete the shared copy'));
-    fireEvent.click(screen.getByText('Yes, delete it'));
+    fireEvent.click(screen.getByText('Stop sharing'));
+    fireEvent.click(screen.getByText('For both of us'));
 
     await vi.waitFor(() => expect(screen.getByText('👥 Share')).toBeTruthy());
     expect(screen.getAllByText('House').length).toBeGreaterThan(0);

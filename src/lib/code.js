@@ -33,3 +33,13 @@ export function formatCode(code) {
   if (typeof code !== 'string') return '';
   return code.replace(/(.{4})(?=.)/g, '$1 ');
 }
+
+/** Kodu gönderirken kullanılan davet metni. Kimsenin adını taşımaz. */
+export function inviteText(goalName, code) {
+  const name = typeof goalName === 'string' && goalName.trim() ? goalName.trim() : 'a goal';
+  return [
+    `Let's save for ${name} together.`,
+    `Code: ${formatCode(code)}`,
+    'Open Our Savings Book, go to Goals, then "Join a shared goal".',
+  ].join('\n');
+}

@@ -1571,3 +1571,50 @@ textarea,
   gap: 0;
   padding-top: 6px;
 }
+
+/* ---------- paylaşım paneli ---------- */
+
+.share-question {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* İki sonucu yan yana koymak yerine alt alta: her biri ne yaptığını
+   kendi üstünde söylüyor, ayrı açıklama paragrafına gerek kalmıyor. */
+.choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.choice-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.choice-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.choice-danger {
+  border-color: rgba(180, 68, 47, 0.45);
+}
+
+.choice-danger .choice-title {
+  color: var(--danger);
+}
+
+.share-panel .code-box {
+  margin-bottom: 2px;
+}

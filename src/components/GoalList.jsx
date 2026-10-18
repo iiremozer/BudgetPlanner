@@ -5,7 +5,8 @@ import { milestoneProgress } from '../lib/milestones.js';
 import { PALETTE, SLATE, colorOf, colorForEmoji, tintFor } from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
-import { formatCode, makeBookCode, normalizeCode } from '../lib/code.js';
+import { formatCode, makeBookCode, normalizeCode, inviteText } from '../lib/code.js';
+import { shareText } from '../lib/native.js';
 import Jar from './Jar.jsx';
 import Contributors from './Contributors.jsx';
 import GoalEditor from './GoalEditor.jsx';
@@ -59,7 +60,7 @@ export default function GoalList({
   const [joinError, setJoinError] = useState('');
   const [copied, setCopied] = useState(null);
   const [editing, setEditing] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [stopping, setStopping] = useState(null);
   const [renaming, setRenaming] = useState(false);
   const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
@@ -252,107 +253,95 @@ export default function GoalList({
               {openShare === goal.id ? (
                 goal.share ? (
                   <div className="share-panel">
-                    <button
-                      type="button"
-                      className="code-box"
-                      onClick={() => {
-                        if (navigator.clipboard) {
-                          navigator.clipboard.writeText(goal.share.code);
-                          setCopied(goal.id);
-                          setTimeout(() => setCopied(null), 1600);
-                        }
-                      }}
-                    >
-                      <span className="code-value">{formatCode(goal.share.code)}</span>
-                      <span className="code-hint">
-                        {copied === goal.id ? 'Copied' : 'Tap to copy'}
-                      </span>
-                    </button>
-                    <p className="hint">
-                      Only this goal is shared. Your other goals, the general pot and everything
-                      else stay on your phone. Anyone with the code can open this goal, so share it
-                      carefully.
-                    </p>
-                    <div className="sync-row">
-                      <span className="sync-status">{syncStatus}</span>
-                      <button type="button" className="link" onClick={onSyncNow}>
-                        Sync now
-                      </button>
-                    </div>
-                    <div className="share-stop">
-                      <button type="button" className="link" onClick={() => onUnshare(goal.id)}>
-                        Stop sharing on this phone
-                      </button>
-                      <p className="hint">
-                        Your entries stay. The other person keeps the shared copy and can carry on.
-                      </p>
-                    </div>
-
-                    <div className="share-stop">
-                      <button
-                        type="button"
-                        className="link link-danger"
-                        onClick={() => setConfirmDelete(goal.id)}
-                      >
-                        Delete the shared copy
-                      </button>
-                      <p className="hint">
-                        Wipes it from the server for everyone. Each of you keeps whatever is already
-                        on your own phone.
-                      </p>
-                    </div>
-
-                    {confirmDelete === goal.id ? (
-                      <div className="confirm-box">
-                        <p className="hint">
-                          Delete the shared copy of {goal.name}? The other person loses access
-                          straight away. This cannot be undone.
-                        </p>
+                    {stopping === goal.id ? (
+                      <>
+                        <p className="share-question">Stop sharing {goal.name}?</p>
                         <button
                           type="button"
-                          className="btn btn-danger"
+                          className="choice"
                           onClick={() => {
-                            onDeleteShared(goal.id);
-                            setConfirmDelete(null);
+                            onUnshare(goal.id);
+                            setStopping(null);
+                            setOpenShare(null);
                           }}
                         >
-                          Yes, delete it
+                          <span className="choice-title">Just on this phone</span>
+                          <span className="choice-note">The other person carries on.</span>
                         </button>
                         <button
                           type="button"
-                          className="btn btn-ghost"
-                          onClick={() => setConfirmDelete(null)}
+                          className="choice choice-danger"
+                          onClick={() => {
+                            onDeleteShared(goal.id);
+                            setStopping(null);
+                            setOpenShare(null);
+                          }}
                         >
-                          Keep it
+                          <span className="choice-title">For both of us</span>
+                          <span className="choice-note">
+                            Deletes the shared copy. Each of you keeps what is already saved.
+                          </span>
                         </button>
-                      </div>
-                    ) : null}
+                        <button type="button" className="link" onClick={() => setStopping(null)}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="code-box"
+                          onClick={() => {
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(goal.share.code);
+                              setCopied(goal.id);
+                              setTimeout(() => setCopied(null), 1600);
+                            }
+                          }}
+                        >
+                          <span className="code-value">{formatCode(goal.share.code)}</span>
+                          <span className="code-hint">
+                            {copied === goal.id ? 'Copied' : 'Tap to copy'}
+                          </span>
+                        </button>
 
-                    <div className="share-foot">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setOpenShare(null)}
-                      >
-                        Done
-                      </button>
-                    </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => shareText(inviteText(goal.name, goal.share.code))}
+                        >
+                          Send code
+                        </button>
+
+                        <div className="sync-row">
+                          <span className="sync-status">{syncStatus}</span>
+                          <button type="button" className="link" onClick={onSyncNow}>
+                            Sync now
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="link"
+                          onClick={() => setStopping(goal.id)}
+                        >
+                          Stop sharing
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="share-panel">
                     <p className="hint">
-                      Share just this goal with someone. Only this goal and its entries leave your
-                      phone.
+                      Only this goal and its entries leave your phone. Anyone with the code can
+                      open it.
                     </p>
                     <button
                       type="button"
-                      className="btn btn-ghost"
+                      className="btn"
                       onClick={() => onShare(goal.id, makeBookCode())}
                     >
                       Create a share code
-                    </button>
-                    <button type="button" className="link" onClick={() => setOpenShare(null)}>
-                      Close
                     </button>
                   </div>
                 )
