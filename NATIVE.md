@@ -58,7 +58,7 @@ Android için ayrıca **Android Studio** gerekiyor; iOS'u bitirdikten sonra.
 ```bash
 npm run build:native
 npx cap add ios
-npm run ios:target   # iOS hedef sürümünü düzeltir (cap add ios sonrası bir kez)
+npx cap migrate      # UIScene desteği ve hedef sürüm (cap add ios sonrası bir kez)
 npm run ios          # derler ve Xcode'u açar
 ```
 
@@ -84,8 +84,13 @@ npm run sync         # web'i derler, native projelere kopyalar
 ## Capacitor sürümü
 
 Capacitor 8 kullanılıyor. iOS 27 SDK'sı UIScene yaşam döngüsünü zorunlu
-tutuyor; Capacitor 7'nin şablonunda bu yok ve uygulama açılışta çöküyordu.
-8.x bunu karşılıyor, o yüzden 7'ye dönme.
+tutuyor ve bu olmadan uygulama açılışta çöküyor. Capacitor'ın ürettiği
+şablonda henüz yok; `npx cap migrate` komutu SceneDelegate.swift'i yazıp
+Info.plist'e sahne bildirimini ekliyor ve AppDelegate'i yamalıyor.
+
+Yani `npx cap add ios` sonrası **mutlaka** `npx cap migrate` çalıştırılmalı.
+`npm run ios:target` artık yalnızca hedef sürümü elle düzeltmek gerekirse
+kullanılıyor; migrate zaten onu da yapıyor.
 
 ## Bundle ID
 

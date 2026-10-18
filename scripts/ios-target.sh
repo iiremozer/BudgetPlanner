@@ -14,8 +14,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="$ROOT/ios/App"
 PODFILE="$APP_DIR/Podfile"
 
-if [ ! -d "$APP_DIR" ]; then
-  echo "ios/App bulunamadı. Önce: npx cap add ios"
+if [ ! -f "$PODFILE" ] || [ ! -f "$APP_DIR/App.xcodeproj/project.pbxproj" ]; then
+  echo "iOS projesi eksik ya da yarım kalmış."
+  echo "Şunu çalıştır:  rm -rf ios && npx cap add ios"
   exit 1
 fi
 
