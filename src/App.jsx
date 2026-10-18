@@ -63,6 +63,7 @@ export default function App() {
   const [tab, setTab] = useState('save');
   const [justAdded, setJustAdded] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
@@ -366,13 +367,24 @@ export default function App() {
     if (!code) return;
 
     setStatus('syncing');
+    let removed = false;
     try {
       await deleteBook(code);
-      unshareGoal(id);
-      setStatus('idle');
+      removed = true;
     } catch {
-      setStatus('error');
+      removed = false;
     }
+
+    // Sunucu silme başarısız olsa bile bu cihazda paylaşımı kesiyoruz:
+    // kullanıcı durdurmak istedi, hedefin "Shared" kalması yanlış olur.
+    // Ama sunucudaki kopya durabileceği için bunu açıkça söylüyoruz.
+    unshareGoal(id);
+    setStatus(removed ? 'idle' : 'error');
+    setNotice(
+      removed
+        ? null
+        : 'Sharing stopped here, but the shared copy could not be removed from the server. Try again when you are back online.'
+    );
   }
 
   function unshareGoal(id) {
@@ -531,6 +543,14 @@ export default function App() {
 
       {tab === 'goals' ? (
         <div className="panel">
+          {notice ? (
+            <div className="notice">
+              <span>{notice}</span>
+              <button type="button" className="link" onClick={() => setNotice(null)}>
+                Dismiss
+              </button>
+            </div>
+          ) : null}
           <GoalList
             goals={state.goals}
             entries={state.entries}

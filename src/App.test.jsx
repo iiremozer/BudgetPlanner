@@ -509,7 +509,7 @@ describe('hedef düzenleme', () => {
     seedTwoGoals();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getAllByText('Edit')[0]);
+    fireEvent.click(screen.getAllByLabelText('Edit goal')[0]);
     const input = screen.getByDisplayValue('Japan');
     fireEvent.change(input, { target: { value: 'Tokyo' } });
     fireEvent.click(screen.getByText('Save changes'));
@@ -521,7 +521,7 @@ describe('hedef düzenleme', () => {
     seedTwoGoals();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getAllByText('Edit')[0]);
+    fireEvent.click(screen.getAllByLabelText('Edit goal')[0]);
     fireEvent.change(screen.getByDisplayValue('3,000.00'), { target: { value: '4000' } });
     fireEvent.click(screen.getByText('Save changes'));
     expect(screen.getByText(/of £4,000\.00/)).toBeTruthy();
@@ -531,7 +531,7 @@ describe('hedef düzenleme', () => {
     seedTwoGoals();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getAllByText('Edit')[0]);
+    fireEvent.click(screen.getAllByLabelText('Edit goal')[0]);
     fireEvent.change(screen.getByDisplayValue('Japan'), { target: { value: '  ' } });
     fireEvent.click(screen.getByText('Save changes'));
     expect(screen.getByText('Give the goal a name.')).toBeTruthy();
@@ -575,7 +575,7 @@ describe('veri silme', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByLabelText('Sharing options'));
     expect(screen.getByText('ABCD 1234 EFGH')).toBeTruthy();
     expect(screen.getByText('Send code')).toBeTruthy();
     expect(screen.getByText('Stop sharing')).toBeTruthy();
@@ -585,7 +585,7 @@ describe('veri silme', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByLabelText('Sharing options'));
     fireEvent.click(screen.getByText('Stop sharing'));
 
     expect(screen.getByText('Stop sharing House?')).toBeTruthy();
@@ -602,11 +602,11 @@ describe('veri silme', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByLabelText('Sharing options'));
     fireEvent.click(screen.getByText('Stop sharing'));
     fireEvent.click(screen.getByText('Just on this phone'));
 
-    expect(screen.getByText('👥 Share')).toBeTruthy();
+    expect(screen.getByLabelText('Share this goal')).toBeTruthy();
     const deleteCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('book_delete'));
     expect(deleteCalls).toHaveLength(0);
   });
@@ -616,11 +616,11 @@ describe('veri silme', () => {
     seedShared();
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    fireEvent.click(screen.getByText('👥 Shared'));
+    fireEvent.click(screen.getByLabelText('Sharing options'));
     fireEvent.click(screen.getByText('Stop sharing'));
     fireEvent.click(screen.getByText('For both of us'));
 
-    await vi.waitFor(() => expect(screen.getByText('👥 Share')).toBeTruthy());
+    await vi.waitFor(() => expect(screen.getByLabelText('Share this goal')).toBeTruthy());
     expect(screen.getAllByText('House').length).toBeGreaterThan(0);
   });
 
@@ -708,5 +708,42 @@ describe('vurgu rolleri', () => {
     fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByText('Dark'));
     expect(document.documentElement.style.getPropertyValue('--pine')).toBe('#1b3a33');
+  });
+});
+
+describe('paylaşımı sunucudan silerken hata', () => {
+  it('sunucu silemese de bu cihazda paylaşım biter ve uyarı çıkar', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Ada' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'House',
+            emoji: '🏠',
+            target: 500000,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            share: { code: 'ABCD1234EFGH' },
+          },
+        ],
+        entries: [],
+      })
+    );
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByLabelText('Sharing options'));
+    fireEvent.click(screen.getByText('Stop sharing'));
+    fireEvent.click(screen.getByText('For both of us'));
+
+    await vi.waitFor(() => expect(screen.getByLabelText('Share this goal')).toBeTruthy());
+    expect(screen.getByText(/could not be removed from the server/)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Dismiss'));
+    expect(screen.queryByText(/could not be removed/)).toBeNull();
   });
 });

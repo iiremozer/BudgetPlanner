@@ -1618,3 +1618,53 @@ textarea,
 .share-panel .code-box {
   margin-bottom: 2px;
 }
+
+/* Hedef kartındaki eylemler ikona döndü: dört düğme dar ekranda da sığıyor
+   ve isimleri uzun hedeflerde satır taşması olmuyor. */
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  color: var(--muted);
+}
+
+.icon-btn[aria-pressed='true'] {
+  background: var(--fill);
+  border-color: var(--fill);
+  color: var(--on-fill);
+}
+
+.icon-btn-on {
+  color: var(--mint);
+  border-color: rgba(47, 143, 111, 0.35);
+}
+
+.icon-btn-danger {
+  color: var(--muted);
+}
+
+.icon-btn-danger:active {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.goal-actions {
+  gap: 8px;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.notice .link {
+  flex: none;
+  color: var(--danger);
+}

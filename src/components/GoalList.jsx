@@ -10,6 +10,7 @@ import { shareText } from '../lib/native.js';
 import Jar from './Jar.jsx';
 import Contributors from './Contributors.jsx';
 import GoalEditor from './GoalEditor.jsx';
+import Icon from './Icon.jsx';
 import { newFromOthers } from '../lib/contributions.js';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
@@ -221,20 +222,29 @@ export default function GoalList({
                 </button>
                 <button
                   type="button"
-                  className={`share-btn${goal.share ? ' share-btn-on' : ''}`}
+                  className={`icon-btn${goal.share ? ' icon-btn-on' : ''}`}
+                  aria-label={goal.share ? 'Sharing options' : 'Share this goal'}
+                  aria-pressed={openShare === goal.id}
                   onClick={() => setOpenShare(openShare === goal.id ? null : goal.id)}
                 >
-                  {goal.share ? '👥 Shared' : '👥 Share'}
+                  <Icon name="people" size={17} />
                 </button>
                 <button
                   type="button"
-                  className="link"
+                  className="icon-btn"
+                  aria-label="Edit goal"
+                  aria-pressed={editing === goal.id}
                   onClick={() => setEditing(editing === goal.id ? null : goal.id)}
                 >
-                  {editing === goal.id ? 'Close' : 'Edit'}
+                  <Icon name="pencil" size={17} />
                 </button>
-                <button type="button" className="link" onClick={() => onRemove(goal.id)}>
-                  Remove
+                <button
+                  type="button"
+                  className="icon-btn icon-btn-danger"
+                  aria-label="Remove goal"
+                  onClick={() => onRemove(goal.id)}
+                >
+                  <Icon name="trash" size={17} />
                 </button>
               </div>
 
