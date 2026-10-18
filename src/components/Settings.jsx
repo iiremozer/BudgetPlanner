@@ -32,10 +32,14 @@ export default function Settings({
   const [link, setLink] = useState(bankLink?.url ?? '');
   const [linkError, setLinkError] = useState('');
   const [confirmErase, setConfirmErase] = useState(false);
+  // Silinirken sunucudaki kopyası da gidecek hedeflerin kimlikleri.
+  const [alsoDelete, setAlsoDelete] = useState([]);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const fileInput = useRef(null);
   const [bank, setBank] = useState(bankLink?.url ?? '');
   const [bankError, setBankError] = useState('');
+
+  const sharedGoals = (state?.goals ?? []).filter((goal) => goal?.share?.code);
 
   function exportBackup() {
     const payload = toBackup(state);
@@ -368,28 +372,80 @@ export default function Settings({
         <div className="stack">
           <p className="hint">
             Everything is kept on this device. Only the goals you choose to share leave your phone,
-            and only that goal and its entries go with them. To remove a shared goal from the
-            server, open that goal and choose "Delete the shared copy".
+            and only that goal and its entries go with them.
           </p>
 
           {confirmErase ? (
             <div className="confirm-box">
               <p className="hint">
-                Erase every goal, win and setting on this phone? Shared copies on the server are not
-                touched. Save a copy first if you might want it back.
+                Erase every goal, win and setting on this phone? Save a copy first if you might want
+                it back.
               </p>
+
+              {sharedGoals.length > 0 ? (
+                <div className="erase-shared">
+                  <span className="field-label">Goals you share</span>
+                  <p className="hint">
+                    These live on the other person's phone too. By default they keep theirs and only
+                    your copy goes — along with the code, so you could not get back in. Tick one to
+                    delete it for both of you.
+                  </p>
+                  {sharedGoals.map((goal) => {
+                    const picked = alsoDelete.includes(goal.id);
+                    return (
+                      <label key={goal.id} className="toggle-row">
+                        <span>
+                          <span className="toggle-title">
+                            {goal.emoji ? `${goal.emoji} ` : ''}
+                            {goal.name}
+                          </span>
+                          <span className="toggle-note">
+                            {picked
+                              ? 'Will be deleted for both of you.'
+                              : 'The other person carries on with it.'}
+                          </span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          aria-label={`Also delete the shared copy of ${goal.name}`}
+                          checked={picked}
+                          onChange={(e) =>
+                            setAlsoDelete((prev) =>
+                              e.target.checked
+                                ? [...prev, goal.id]
+                                : prev.filter((id) => id !== goal.id)
+                            )
+                          }
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : null}
+
               <button
                 type="button"
                 className="btn btn-danger"
                 onClick={() => {
-                  onEraseEverything();
+                  const codes = sharedGoals
+                    .filter((goal) => alsoDelete.includes(goal.id))
+                    .map((goal) => goal.share.code);
+                  onEraseEverything(codes);
                   setConfirmErase(false);
+                  setAlsoDelete([]);
                   setMessage('Everything on this device was erased.');
                 }}
               >
                 Yes, erase everything
               </button>
-              <button type="button" className="btn btn-ghost" onClick={() => setConfirmErase(false)}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setConfirmErase(false);
+                  setAlsoDelete([]);
+                }}
+              >
                 Cancel
               </button>
             </div>

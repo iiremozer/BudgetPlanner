@@ -453,6 +453,33 @@ export default function App() {
    * Paylaşılan kopyayı sunucudan siler ve hedefi yerelde paylaşımdan çıkarır.
    * Kayıtlar cihazda kalır; silinen şey yalnızca sunucudaki ortak kopyadır.
    */
+  /**
+   * Bu cihazdaki her şeyi siler. Paylaşımlı hedeflerde kullanıcı, sunucudaki
+   * kopyanın da silinmesini isteyebilir — istemezse karşı taraf devam eder.
+   * Sunucu silinemezse bunu söylüyoruz: cihaz yine de temizleniyor, çünkü
+   * kullanıcı bunu istedi ve kodlar da onunla birlikte gidiyor.
+   */
+  async function eraseEverything(codes = []) {
+    if (codes.length > 0) setStatus('syncing');
+    let failed = 0;
+    for (const code of codes) {
+      try {
+        await deleteBook(code);
+      } catch {
+        failed += 1;
+      }
+    }
+
+    dirty.current = false;
+    setState(defaultState());
+    setStatus(failed > 0 ? 'error' : 'idle');
+    setNotice(
+      failed > 0
+        ? `Everything on this phone was erased, but ${failed === 1 ? 'one shared copy' : `${failed} shared copies`} could not be removed from the server. The other person still has ${failed === 1 ? 'it' : 'them'}.`
+        : null
+    );
+  }
+
   async function deleteSharedCopy(id) {
     const goal = stateRef.current.goals.find((g) => g.id === id);
     const code = goal?.share?.code;
@@ -517,6 +544,17 @@ export default function App() {
 
   const sharedCount = state.goals.filter((g) => g.share?.code).length;
 
+  // Uyarı iki yerde görünebilmeli: hedefler sekmesinde ve ayarlarda. Silme
+  // sonrası uyarısı ayarlarda doğuyor, orada görünmezse kimse okumaz.
+  const noticeBox = notice ? (
+    <div className="notice">
+      <span>{notice}</span>
+      <button type="button" className="link" onClick={() => setNotice(null)}>
+        Dismiss
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div
       className="app"
@@ -542,6 +580,7 @@ export default function App() {
 
       {settingsOpen ? (
         <div className="settings-view panel" ref={settingsRef}>
+        {noticeBox}
         <Settings
           member={state.member}
           currency={state.currency}
@@ -563,7 +602,7 @@ export default function App() {
             setState((prev) => ({ ...prev, currency, currencyAt: new Date().toISOString() }))
           }
           onSetBankLink={(bankLink) => setState((prev) => ({ ...prev, bankLink }))}
-          onEraseEverything={() => setState(defaultState())}
+          onEraseEverything={eraseEverything}
           onRestore={(restored, mode) => {
             dirty.current = true;
             setState((prev) =>
@@ -637,14 +676,7 @@ export default function App() {
 
       {tab === 'goals' ? (
         <div className="panel">
-          {notice ? (
-            <div className="notice">
-              <span>{notice}</span>
-              <button type="button" className="link" onClick={() => setNotice(null)}>
-                Dismiss
-              </button>
-            </div>
-          ) : null}
+          {noticeBox}
           <GoalList
             goals={state.goals}
             entries={state.entries}

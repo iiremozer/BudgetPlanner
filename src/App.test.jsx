@@ -636,6 +636,74 @@ describe('veri silme', () => {
     fireEvent.click(screen.getByText('Goals'));
     expect(screen.queryByText('House')).toBeNull();
   });
+
+  it('silme onayı paylaşımlı hedefleri listeler', () => {
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+
+    expect(screen.getByText('Goals you share')).toBeTruthy();
+    expect(screen.getByText('🏠 House')).toBeTruthy();
+    expect(screen.getByText('The other person carries on with it.')).toBeTruthy();
+  });
+
+  it('paylaşımlı hedef yoksa o bölüm hiç çıkmaz', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+
+    expect(screen.queryByText('Goals you share')).toBeNull();
+  });
+
+  it('işaretlenmezse sunucudaki kopyaya dokunmaz', () => {
+    const fetchMock = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(true) }));
+    vi.stubGlobal('fetch', fetchMock);
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+    fireEvent.click(screen.getByText('Yes, erase everything'));
+
+    const deleteCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('book_delete'));
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it('işaretlenirse sunucudaki kopyayı da siler', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(true) }));
+    vi.stubGlobal('fetch', fetchMock);
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+
+    fireEvent.click(screen.getByLabelText('Also delete the shared copy of House'));
+    expect(screen.getByText('Will be deleted for both of you.')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Yes, erase everything'));
+
+    await vi.waitFor(() => {
+      const calls = fetchMock.mock.calls.filter(([url]) => String(url).includes('book_delete'));
+      expect(calls).toHaveLength(1);
+    });
+  });
+
+  it('sunucu silinemezse cihaz yine temizlenir ve bunu söyler', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
+    seedShared();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Erase everything on this device'));
+    fireEvent.click(screen.getByLabelText('Also delete the shared copy of House'));
+    fireEvent.click(screen.getByText('Yes, erase everything'));
+
+    await vi.waitFor(() =>
+      expect(screen.getByText(/could not be removed from the server/)).toBeTruthy()
+    );
+    fireEvent.click(screen.getByText('Done'));
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByText('House')).toBeNull();
+  });
 });
 
 describe('bildirim ayarları', () => {

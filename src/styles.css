@@ -88,7 +88,12 @@ select {
 .app {
   max-width: 480px;
   margin: 0 auto;
-  padding: calc(20px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+  /* Yan boşluklar da güvenli alana saygı duyuyor: telefon yan çevrildiğinde
+     çentik ve yuvarlak köşeler metni kesmesin. */
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  padding-left: calc(18px + env(safe-area-inset-left));
+  padding-right: calc(18px + env(safe-area-inset-right));
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -914,9 +919,12 @@ select {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+  /* Zemin tüm genişliği kaplar, düğmeler ortada 456px'te durur. Daha önce
+     çubuğun kendisi 480px'ti; geniş ekranda kenarlarından içerik sızıyordu. */
+  padding-top: 8px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  padding-left: max(calc(12px + env(safe-area-inset-left)), calc((100% - 456px) / 2));
+  padding-right: max(calc(12px + env(safe-area-inset-right)), calc((100% - 456px) / 2));
   background: var(--bar-bg);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
@@ -1227,7 +1235,10 @@ select {
   overflow-y: auto;
   display: grid;
   place-items: center;
-  padding: calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+  padding-top: calc(28px + env(safe-area-inset-top));
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  padding-left: calc(20px + env(safe-area-inset-left));
+  padding-right: calc(20px + env(safe-area-inset-right));
   background: linear-gradient(180deg, var(--tone-tint), var(--canvas) 55%);
   animation: fade-in 0.35s ease both;
 }
@@ -1451,6 +1462,17 @@ select {
   background: var(--surface);
   border: 1px solid var(--danger);
   border-radius: 12px;
+}
+
+/* Silme onayında paylaşımlı hedefler: karşı tarafı ilgilendiren kısım
+   olduğu için kutunun içinde kendi bloğu olarak duruyor. */
+.erase-shared {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 11px;
 }
 
 .btn-danger {
