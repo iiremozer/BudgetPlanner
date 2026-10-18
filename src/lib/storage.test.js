@@ -175,8 +175,8 @@ describe('hedef planı', () => {
 
 describe('ortak defter alanları', () => {
   it('geçerli üyeyi korur', () => {
-    const s = normalizeState({ member: { id: 'm1', name: 'İrem' } });
-    expect(s.member).toEqual({ id: 'm1', name: 'İrem' });
+    const s = normalizeState({ member: { id: 'm1', name: 'Ada' } });
+    expect(s.member).toEqual({ id: 'm1', name: 'Ada' });
   });
 
   it('adsız üyeyi atar', () => {
@@ -208,8 +208,8 @@ describe('ortak defter alanları', () => {
   });
 
   it('kaydı kimin girdiğini saklar', () => {
-    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null, by: 'İrem' }] });
-    expect(s.entries[0].by).toBe('İrem');
+    const s = normalizeState({ goals: [], entries: [{ ...validEntry, goalId: null, by: 'Ada' }] });
+    expect(s.entries[0].by).toBe('Ada');
   });
 });
 
@@ -219,7 +219,7 @@ describe('genel kavanozun adı', () => {
   });
 
   it('kullanıcının adını korur ve kırpar', () => {
-    expect(normalizeState({ generalName: '  Günlük  ' }).generalName).toBe('Günlük');
+    expect(normalizeState({ generalName: '  Daily  ' }).generalName).toBe('Daily');
   });
 
   it('boş ad varsayılana döner', () => {

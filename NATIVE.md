@@ -3,7 +3,7 @@
 Bu adımlar yalnızca bir kez gerekiyor. Terminal'i aç, depoyu klonla:
 
 ```bash
-git clone https://github.com/iiremozer/BudgetPlanner.git
+git clone <deponun-adresi>
 cd BudgetPlanner
 npm install
 ```

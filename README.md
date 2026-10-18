@@ -3,7 +3,7 @@
 Gider takibi değil, birikim defteri. "Kahve almadım → +£5" diye yazdığın her kazanç
 deftere işlenir, toplam büyür, seri devam eder.
 
-Eşimle ortak kullanmak üzere yapıldı.
+İki kişinin ortak kullanması için yapıldı.
 
 ## Nasıl çalışır
 

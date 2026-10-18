@@ -3,7 +3,7 @@ import { pendingCelebration, topCategory, goalSummary, shareText } from './celeb
 
 const at = (y, m, d) => new Date(y, m - 1, d, 12).toISOString();
 const goal = (id, target) => ({ id, name: 'Japan', emoji: '🛫', target, createdAt: at(2026, 1, 1) });
-const entry = (id, amount, when, goalId = 'g1', emoji = '☕', by = 'Irem') => ({
+const entry = (id, amount, when, goalId = 'g1', emoji = '☕', by = 'Ada') => ({
   id,
   amount,
   at: when,
@@ -63,35 +63,35 @@ describe('topCategory', () => {
 
 describe('goalSummary', () => {
   const entries = [
-    entry('a', 400, at(2026, 1, 1), 'g1', '☕', 'Irem'),
-    entry('b', 400, at(2026, 1, 8), 'g1', '☕', 'Batuhan'),
-    entry('c', 200, at(2026, 1, 15), 'g1', '🚕', 'Irem'),
+    entry('a', 400, at(2026, 1, 1), 'g1', '☕', 'Ada'),
+    entry('b', 400, at(2026, 1, 8), 'g1', '☕', 'Sam'),
+    entry('c', 200, at(2026, 1, 15), 'g1', '🚕', 'Ada'),
   ];
 
   it('toplam ve sayıyı verir', () => {
-    const s = goalSummary(goal('g1', 1000), entries, 'Irem');
+    const s = goalSummary(goal('g1', 1000), entries, 'Ada');
     expect(s.saved).toBe(1000);
     expect(s.count).toBe(3);
   });
 
   it('süreyi gün olarak hesaplar', () => {
-    expect(goalSummary(goal('g1', 1000), entries, 'Irem').days).toBe(14);
+    expect(goalSummary(goal('g1', 1000), entries, 'Ada').days).toBe(14);
   });
 
   it('tek kayıtta süre bir gündür', () => {
     const one = [entry('a', 1000, at(2026, 1, 1))];
-    expect(goalSummary(goal('g1', 1000), one, 'Irem').days).toBe(1);
+    expect(goalSummary(goal('g1', 1000), one, 'Ada').days).toBe(1);
   });
 
   it('katkı sahiplerini işaretler', () => {
-    const s = goalSummary(goal('g1', 1000), entries, 'Irem');
-    const me = s.contributors.find((c) => c.name === 'Irem');
+    const s = goalSummary(goal('g1', 1000), entries, 'Ada');
+    const me = s.contributors.find((c) => c.name === 'Ada');
     expect(me.isMe).toBe(true);
     expect(me.total).toBe(600);
   });
 
   it('en sık kalıbı taşır', () => {
-    expect(goalSummary(goal('g1', 1000), entries, 'Irem').category.label).toBe('Coffee');
+    expect(goalSummary(goal('g1', 1000), entries, 'Ada').category.label).toBe('Coffee');
   });
 });
 
@@ -102,19 +102,19 @@ describe('shareText', () => {
   ];
 
   it('hedefi ve tutarı yazar', () => {
-    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Irem'), 'GBP');
+    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Ada'), 'GBP');
     expect(text).toContain('Japan');
     expect(text).toContain('£10.00');
     expect(text).toContain('10 days');
   });
 
   it('kalıbı sayıyla anar', () => {
-    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Irem'), 'GBP');
+    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Ada'), 'GBP');
     expect(text).toContain('2 × coffee');
   });
 
   it('kimsenin adını paylaşmaz', () => {
-    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Irem'), 'GBP');
-    expect(text).not.toContain('Irem');
+    const text = shareText(goal('g1', 1000), goalSummary(goal('g1', 1000), entries, 'Ada'), 'GBP');
+    expect(text).not.toContain('Ada');
   });
 });

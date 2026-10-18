@@ -12,7 +12,7 @@ import { defaultState } from './storage.js';
 const entry = (id, amount, at) => ({ id, amount, at, goalId: null, note: '' });
 const sample = () => ({
   currency: 'TRY',
-  generalName: 'Günlük',
+  generalName: 'Daily',
   goals: [
     {
       id: 'g1',
@@ -55,7 +55,7 @@ describe('fromBackup', () => {
   });
 
   it('nesne olarak da kabul eder', () => {
-    expect(fromBackup(toBackup(sample())).generalName).toBe('Günlük');
+    expect(fromBackup(toBackup(sample())).generalName).toBe('Daily');
   });
 
   it('bozuk metinde null verir', () => {

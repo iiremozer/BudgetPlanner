@@ -102,9 +102,9 @@ describe('mergeState', () => {
   });
 
   it('cihaza özel alanları bozmaz', () => {
-    const local = { ...base(), member: { id: 'm1', name: 'İrem' } };
+    const local = { ...base(), member: { id: 'm1', name: 'Ada' } };
     const merged = mergeState(local, base());
-    expect(merged.member).toEqual({ id: 'm1', name: 'İrem' });
+    expect(merged.member).toEqual({ id: 'm1', name: 'Ada' });
   });
 });
 
@@ -127,7 +127,7 @@ describe('markDeleted', () => {
 
 describe('shareable', () => {
   it('cihaza özel alanları dışarıda bırakır', () => {
-    const state = { ...base(), member: { id: 'm1', name: 'İrem' }, book: { code: 'ABC' } };
+    const state = { ...base(), member: { id: 'm1', name: 'Ada' }, book: { code: 'ABC' } };
     const out = shareable(state);
     expect(out.member).toBeUndefined();
     expect(out.book).toBeUndefined();

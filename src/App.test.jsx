@@ -72,10 +72,10 @@ describe('uygulama açılışı', () => {
             goalId: 'g1',
             at: '2026-01-02T10:00:00.000Z',
             note: 'Coffee',
-            by: 'İrem',
+            by: 'Ada',
           },
         ],
-        member: { id: 'm1', name: 'İrem' },
+        member: { id: 'm1', name: 'Ada' },
       })
     );
 
@@ -112,7 +112,7 @@ describe('genel kavanoz', () => {
       'ortak-birikim-defteri:v1',
       JSON.stringify({
         currency: 'GBP',
-        generalName: 'Günlük kasa',
+        generalName: 'Daily pot',
         goals: [],
         entries: [
           { id: 'e1', amount: 400, goalId: null, at: '2026-01-02T10:00:00.000Z', note: 'Coffee' },
@@ -122,7 +122,7 @@ describe('genel kavanoz', () => {
     );
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
-    expect(screen.getAllByText('Günlük kasa').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Daily pot').length).toBeGreaterThan(0);
     expect(screen.getByText(/Next milestone/)).toBeTruthy();
   });
 });
@@ -174,7 +174,7 @@ describe('ayarlar', () => {
   it('isim kaydedilir', () => {
     render(<App />);
     fireEvent.click(screen.getByLabelText('Settings'));
-    fireEvent.change(screen.getByPlaceholderText('Your name'), { target: { value: 'İrem' } });
+    fireEvent.change(screen.getByPlaceholderText('Your name'), { target: { value: 'Ada' } });
     fireEvent.click(screen.getByText('Save name'));
     expect(screen.getByText('Saved')).toBeTruthy();
   });
@@ -301,7 +301,7 @@ describe('eşin aktivitesi', () => {
       'ortak-birikim-defteri:v1',
       JSON.stringify({
         currency: 'GBP',
-        member: { id: 'm1', name: 'Irem' },
+        member: { id: 'm1', name: 'Ada' },
         goals: [
           {
             id: 'g1',
@@ -315,8 +315,8 @@ describe('eşin aktivitesi', () => {
           },
         ],
         entries: [
-          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' },
-          { id: 'e2', amount: 20000, goalId: 'g1', at: '2026-03-02T10:00:00.000Z', by: 'Batuhan' },
+          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Ada' },
+          { id: 'e2', amount: 20000, goalId: 'g1', at: '2026-03-02T10:00:00.000Z', by: 'Sam' },
         ],
         seen: seen ? { g1: seen } : {},
       })
@@ -328,7 +328,7 @@ describe('eşin aktivitesi', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
     expect(screen.getByText('You')).toBeTruthy();
-    expect(screen.getByText('Batuhan')).toBeTruthy();
+    expect(screen.getByText('Sam')).toBeTruthy();
     expect(screen.getByText('£100.00')).toBeTruthy();
     expect(screen.getByText('£200.00')).toBeTruthy();
   });
@@ -338,7 +338,7 @@ describe('eşin aktivitesi', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Goals'));
     expect(screen.getByText('1 new')).toBeTruthy();
-    expect(screen.getByText(/Batuhan added £200\.00/)).toBeTruthy();
+    expect(screen.getByText(/Sam added £200\.00/)).toBeTruthy();
   });
 
   it('her şey görüldüyse rozet yerine Shared yazar', () => {
@@ -365,7 +365,7 @@ describe('eşin aktivitesi', () => {
       'ortak-birikim-defteri:v1',
       JSON.stringify({
         currency: 'GBP',
-        member: { id: 'm1', name: 'Irem' },
+        member: { id: 'm1', name: 'Ada' },
         goals: [
           {
             id: 'g1',
@@ -378,7 +378,7 @@ describe('eşin aktivitesi', () => {
           },
         ],
         entries: [
-          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' },
+          { id: 'e1', amount: 10000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Ada' },
         ],
         seen: {},
       })
@@ -395,7 +395,7 @@ describe('hedef tamamlama kutlaması', () => {
       'ortak-birikim-defteri:v1',
       JSON.stringify({
         currency: 'GBP',
-        member: { id: 'm1', name: 'Irem' },
+        member: { id: 'm1', name: 'Ada' },
         goals: [
           {
             id: 'g1',
@@ -408,7 +408,7 @@ describe('hedef tamamlama kutlaması', () => {
           },
         ],
         entries: [
-          { id: 'e1', amount, goalId: 'g1', at: '2026-01-02T10:00:00.000Z', emoji: '☕', by: 'Irem' },
+          { id: 'e1', amount, goalId: 'g1', at: '2026-01-02T10:00:00.000Z', emoji: '☕', by: 'Ada' },
         ],
         celebrated: celebrated ? { g1: '2026-02-01T00:00:00.000Z' } : {},
       })
@@ -554,7 +554,7 @@ describe('veri silme', () => {
       'ortak-birikim-defteri:v1',
       JSON.stringify({
         currency: 'GBP',
-        member: { id: 'm1', name: 'Irem' },
+        member: { id: 'm1', name: 'Ada' },
         goals: [
           {
             id: 'g1',
@@ -566,7 +566,7 @@ describe('veri silme', () => {
             share: { code: 'ABCD1234EFGH' },
           },
         ],
-        entries: [{ id: 'e1', amount: 5000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Irem' }],
+        entries: [{ id: 'e1', amount: 5000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Ada' }],
       })
     );
   }
