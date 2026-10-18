@@ -12,7 +12,8 @@
     "build:native": "VITE_BASE=./ vite build",
     "sync": "npm run build:native && cap sync",
     "ios": "npm run sync && cap open ios",
-    "android": "npm run sync && cap open android"
+    "android": "npm run sync && cap open android",
+    "ios:target": "bash scripts/ios-target.sh"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.9",

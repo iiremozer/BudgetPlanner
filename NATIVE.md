@@ -58,6 +58,7 @@ Android için ayrıca **Android Studio** gerekiyor; iOS'u bitirdikten sonra.
 ```bash
 npm run build:native
 npx cap add ios
+npm run ios:target   # iOS hedef sürümünü düzeltir (cap add ios sonrası bir kez)
 npm run ios          # derler ve Xcode'u açar
 ```
 
