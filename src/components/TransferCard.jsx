@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatMoney, parseAmount, CURRENCIES } from '../lib/money.js';
+import { formatMoney, parseAmount } from '../lib/money.js';
 import { pendingAmount, daysWaiting, lastTransferAt } from '../lib/transfers.js';
 import { hostOf } from '../lib/banklink.js';
 import { openExternal, isNative } from '../lib/native.js';
@@ -23,7 +23,6 @@ export default function TransferCard({ entries, transfers, currency, prompting, 
   }
 
   const days = daysWaiting(entries, transfers);
-  const symbol = CURRENCIES[currency].symbol;
   const parsed = parseAmount(amount);
 
   function confirm(value) {
@@ -62,7 +61,7 @@ export default function TransferCard({ entries, transfers, currency, prompting, 
               className="control control-amount"
               type="text"
               inputMode="decimal"
-              placeholder={`${symbol}0.00`}
+              placeholder={formatMoney(0, currency)}
               value={amount}
               onChange={(e) => {
                 setAmount(e.target.value);

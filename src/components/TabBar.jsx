@@ -19,9 +19,15 @@ export default function TabBar({ active, onChange, badge, goalsDot }) {
         >
           <span className="tab-icon">
             <Icon name={tab.icon} size={23} strokeWidth={active === tab.id ? 2 : 1.7} />
+            {/* Seri sayısı ikona yapışık duruyor: çubuğun köşesinde durduğunda
+                okunmamış bildirim sanılıyordu. */}
+            {tab.id === 'history' && badge > 0 ? (
+              <span className="tab-badge" aria-label={`${badge} day streak`}>
+                {badge}
+              </span>
+            ) : null}
           </span>
           <span className="tab-label">{tab.label}</span>
-          {tab.id === 'history' && badge > 0 ? <span className="tab-badge">{badge}</span> : null}
           {tab.id === 'goals' && goalsDot ? <span className="tab-dot" /> : null}
         </button>
       ))}

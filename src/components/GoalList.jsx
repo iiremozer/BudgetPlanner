@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
 import { goalProgress, savedForGoal } from '../lib/savings.js';
 import { milestoneProgress } from '../lib/milestones.js';
-import { PALETTE, SLATE, colorOf, colorForEmoji, tintFor } from '../lib/colors.js';
+import { PALETTE, SLATE, colorOf, colorForEmoji, tintFor, nextColor } from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode, inviteText } from '../lib/code.js';
@@ -44,6 +44,7 @@ export default function GoalList({
   onAdd,
   onRemove,
   onMove,
+  onMoveTop,
   onShare,
   onUnshare,
   onDeleteShared,
@@ -62,6 +63,8 @@ export default function GoalList({
   const [copied, setCopied] = useState(null);
   const [editing, setEditing] = useState(null);
   const [stopping, setStopping] = useState(null);
+  const [removing, setRemoving] = useState(null);
+  const [sorting, setSorting] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
@@ -71,9 +74,14 @@ export default function GoalList({
   const [perPeriod, setPerPeriod] = useState('');
   const [period, setPeriod] = useState('week');
   const [emoji, setEmoji] = useState(EMOJIS[0]);
-  const [color, setColor] = useState(colorForEmoji(EMOJIS[0]));
+  // null = henüz seçilmedi: o zaman paletten kullanılmamış bir renk öneriyoruz,
+  // böylece arka arkaya kurulan hedefler birbirinin aynısı olmuyor.
+  const [color, setColor] = useState(null);
   const [shareOnCreate, setShareOnCreate] = useState(false);
   const [error, setError] = useState('');
+
+  const suggestedColor = nextColor(goals.map((g) => g.color));
+  const activeColor = color ?? suggestedColor;
 
   const targetValue = hasTarget ? parseAmount(target) : 0;
   const perValue = parseAmount(perPeriod);
@@ -96,7 +104,7 @@ export default function GoalList({
     setPeriod('week');
     setHasTarget(true);
     setEmoji(EMOJIS[0]);
-    setColor(colorForEmoji(EMOJIS[0]));
+    setColor(null);
     setShareOnCreate(false);
     setError('');
     setOpen(false);
@@ -118,7 +126,7 @@ export default function GoalList({
       name: finalName,
       target: hasTarget ? targetValue : 0,
       emoji,
-      color,
+      color: activeColor,
       plan: hasTarget && perValue ? { perPeriod: perValue, period } : null,
       share: shareOnCreate ? { code: makeBookCode() } : null,
     });
@@ -129,7 +137,13 @@ export default function GoalList({
     <section className="card">
       <div className="card-head">
         <h2 className="card-title">Goals</h2>
-        <span className="card-note">{goals.length + 1}</span>
+        {goals.length > 1 ? (
+          <button type="button" className="link" onClick={() => setSorting(!sorting)}>
+            {sorting ? 'Done' : 'Reorder'}
+          </button>
+        ) : (
+          <span className="card-note">{goals.length + 1}</span>
+        )}
       </div>
 
       {goals.length === 0 && !open ? (
@@ -202,24 +216,39 @@ export default function GoalList({
               ) : null}
 
               <div className="goal-actions">
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label="Move up"
-                  disabled={index === 0}
-                  onClick={() => onMove(goal.id, 'up')}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label="Move down"
-                  disabled={index === list.length - 1}
-                  onClick={() => onMove(goal.id, 'down')}
-                >
-                  ↓
-                </button>
+                {sorting ? (
+                  <>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label="Move to top"
+                      disabled={index === 0}
+                      onClick={() => onMoveTop(goal.id)}
+                    >
+                      ⤒
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label="Move up"
+                      disabled={index === 0}
+                      onClick={() => onMove(goal.id, 'up')}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label="Move down"
+                      disabled={index === list.length - 1}
+                      onClick={() => onMove(goal.id, 'down')}
+                    >
+                      ↓
+                    </button>
+                  </>
+                ) : null}
+                {sorting ? null : (
+                <>
                 <button
                   type="button"
                   className={`icon-btn${goal.share ? ' icon-btn-on' : ''}`}
@@ -242,11 +271,41 @@ export default function GoalList({
                   type="button"
                   className="icon-btn icon-btn-danger"
                   aria-label="Remove goal"
-                  onClick={() => onRemove(goal.id)}
+                  aria-pressed={removing === goal.id}
+                  onClick={() => setRemoving(removing === goal.id ? null : goal.id)}
                 >
                   <Icon name="trash" size={17} />
                 </button>
+                </>
+                )}
               </div>
+
+              {/* Silme tek dokunuşla olmuyor artık: çöp kutusu kalemin yanında
+                  duruyor ve kaybolan şey hedefin adı, tutarı ve rengi. Paranın
+                  nereye gittiğini de söylüyoruz, çünkü kayıtlar silinmiyor. */}
+              {removing === goal.id ? (
+                <div className="confirm-box">
+                  <p className="share-question">Remove {goal.name}?</p>
+                  <p className="hint">
+                    {p.saved > 0
+                      ? `The ${formatMoney(p.saved, currency)} you logged moves to ${generalName}. Nothing is lost.`
+                      : 'Nothing has been logged against it yet.'}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => {
+                      onRemove(goal.id);
+                      setRemoving(null);
+                    }}
+                  >
+                    Remove goal
+                  </button>
+                  <button type="button" className="link" onClick={() => setRemoving(null)}>
+                    Cancel
+                  </button>
+                </div>
+              ) : null}
 
               {editing === goal.id ? (
                 <GoalEditor
@@ -612,7 +671,7 @@ export default function GoalList({
                   type="button"
                   className="swatch"
                   aria-label={c.name}
-                  aria-pressed={color === c.id}
+                  aria-pressed={activeColor === c.id}
                   style={{ background: c.base }}
                   onClick={() => setColor(c.id)}
                 />

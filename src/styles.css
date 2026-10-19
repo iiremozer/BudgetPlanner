@@ -947,12 +947,18 @@ select {
   font-weight: 600;
 }
 
+.tab-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
 .tab-badge {
   position: absolute;
-  top: 2px;
-  right: 10px;
-  min-width: 17px;
-  height: 17px;
+  top: -5px;
+  right: -12px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   display: grid;
   place-items: center;
@@ -1560,6 +1566,7 @@ textarea,
 }
 
 .tab-icon {
+  position: relative;
   display: grid;
   place-items: center;
   height: 24px;

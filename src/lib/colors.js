@@ -104,3 +104,15 @@ const BY_EMOJI = {
 export function colorForEmoji(emoji) {
   return BY_EMOJI[emoji] ?? DEFAULT_COLOR;
 }
+
+/**
+ * Yeni bir hedefe verilecek renk. Önce paletteki kullanılmamış renklerden
+ * biri; hepsi doluysa baştan döner. Böylece kullanıcı hiç seçim yapmasa da
+ * liste tek düze olmuyor.
+ */
+export function nextColor(usedIds = []) {
+  const used = new Set(usedIds.filter(Boolean));
+  const free = PALETTE.find((c) => !used.has(c.id));
+  if (free) return free.id;
+  return PALETTE[used.size % PALETTE.length].id;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { parseAmount, formatMoney, CURRENCIES } from '../lib/money.js';
+import { parseAmount, formatMoney } from '../lib/money.js';
 import { PRESETS, presetAmount } from '../lib/presets.js';
 import { sortGoals, primaryGoal } from '../lib/goals.js';
 import { colorOf } from '../lib/colors.js';
@@ -20,7 +20,6 @@ export default function EntryForm({ currency, goals, entries, generalName, onAdd
     if (!touchedGoal) setGoalId(suggested ? suggested.id : null);
   }, [suggested?.id, touchedGoal]);
 
-  const symbol = CURRENCIES[currency].symbol;
   const parsed = parseAmount(amount);
   const ready = parsed !== null && parsed > 0;
 
@@ -88,7 +87,7 @@ export default function EntryForm({ currency, goals, entries, generalName, onAdd
             className="control control-amount"
             type="text"
             inputMode="decimal"
-            placeholder={`${symbol}0.00`}
+            placeholder={formatMoney(0, currency)}
             value={amount}
             onChange={(e) => {
               setAmount(e.target.value);

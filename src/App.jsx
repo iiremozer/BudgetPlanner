@@ -16,7 +16,7 @@ import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
 import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
-import { resolveTheme, accentOf, accentRoles } from './lib/colors.js';
+import { resolveTheme, accentOf, accentRoles, isColorId, nextColor } from './lib/colors.js';
 import { planNotifications } from './lib/notifications.js';
 import {
   isNative,
@@ -27,7 +27,7 @@ import {
   setStatusBarStyle,
   onBackButton,
 } from './lib/native.js';
-import { moveGoal, normalizeOrders } from './lib/goals.js';
+import { moveGoal, moveGoalToTop, normalizeOrders } from './lib/goals.js';
 import { readBook, writeBook, deleteBook, isRemoteConfigured } from './lib/remote.js';
 
 const BURST_MS = 1050;
@@ -38,9 +38,14 @@ const BURST_MS = 1050;
 // değişikliklerini beş dakikada bir çek, uygulamaya dönünce ve aşağı
 // çekince hemen bak.
 const PUSH_EVERY_MS = 60_000;
-const PULL_EVERY_MS = 5 * 60_000;
+// Ekran açıkken daha sık bakıyoruz: karşı taraf bir şey yazdığında dakikalarca
+// beklemek ortak hedefi ölü gösteriyordu. Uygulama arkadayken seyrek.
+const PULL_EVERY_MS = 60_000;
+const PULL_BACKGROUND_MS = 5 * 60_000;
 const FOCUS_MIN_GAP_MS = 20_000;
 const TICK_MS = 20_000;
+// Paylaşımlı hedefe kayıt girildiğinde beklenecek kısa süre.
+const QUICK_PUSH_MS = 2_500;
 const PULL_THRESHOLD = 64;
 
 function statusText(status, lastSync) {
@@ -65,6 +70,9 @@ export default function App() {
   const [justAdded, setJustAdded] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notice, setNotice] = useState(null);
+  // Paylaşımlı hedefe kayıt girildiğinde kısa bir gecikmeyle gönderimi
+  // tetikler. Sayaç artar, aşağıdaki etki onu görür.
+  const [pushSoon, setPushSoon] = useState(0);
 
   const stateRef = useRef(state);
   const burstTimer = useRef(null);
@@ -160,18 +168,32 @@ export default function App() {
     if (!hasShared) return undefined;
     const tick = () => {
       const since = Date.now() - lastSyncAt.current;
-      if ((dirty.current && since >= PUSH_EVERY_MS) || since >= PULL_EVERY_MS) sync();
+      const visible =
+        typeof document === 'undefined' || document.visibilityState !== 'hidden';
+      const pullEvery = visible ? PULL_EVERY_MS : PULL_BACKGROUND_MS;
+      if ((dirty.current && since >= PUSH_EVERY_MS) || since >= pullEvery) sync();
     };
     tick();
     const id = setInterval(tick, TICK_MS);
     return () => clearInterval(id);
   }, [hasShared, sync]);
 
-  // Uygulamaya geri dönünce bak.
+  // Paylaşımlı hedefe yeni kayıt: birkaç saniye içinde gönder. Art arda
+  // girişlerde zamanlayıcı yenilenir, tek gönderimde hepsi gider.
+  useEffect(() => {
+    if (pushSoon === 0 || !hasShared) return undefined;
+    const id = setTimeout(() => sync(), QUICK_PUSH_MS);
+    return () => clearTimeout(id);
+  }, [pushSoon, hasShared, sync]);
+
+  // Uygulamaya geri dönünce bak. Arka plana geçerken de bekleyeni gönder.
   useEffect(() => {
     if (!hasShared) return undefined;
     const onWake = () => {
-      if (document.visibilityState === 'hidden') return;
+      if (document.visibilityState === 'hidden') {
+        if (dirty.current) sync();
+        return;
+      }
       if (Date.now() - lastSyncAt.current >= FOCUS_MIN_GAP_MS) sync();
     };
     window.addEventListener('focus', onWake);
@@ -380,6 +402,10 @@ export default function App() {
     };
     dirty.current = true;
     setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
+    // Paylaşımlı bir hedefe yazıldıysa karşı taraf dakikalarca beklemesin.
+    if (goalId && stateRef.current.goals.some((g) => g.id === goalId && g.share?.code)) {
+      setPushSoon((n) => n + 1);
+    }
     setBurst(entry);
     setJustAdded(entry);
     tapFeedback();
@@ -415,20 +441,25 @@ export default function App() {
     }));
   }
 
-  function addGoal({ name, target, emoji, plan, share }) {
+  function addGoal({ name, target, emoji, plan, share, color }) {
     dirty.current = true;
     const now = new Date().toISOString();
-    const goal = {
-      id: makeId('g'),
-      name,
-      target,
-      emoji,
-      plan: plan ?? null,
-      share: share ?? null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setState((prev) => ({ ...prev, goals: normalizeOrders([...prev.goals, goal]) }));
+    setState((prev) => {
+      const goal = {
+        id: makeId('g'),
+        name,
+        target,
+        emoji,
+        // Seçilmemişse paletten kullanılmamış bir renk: altı hedef kuran biri
+        // altı aynı kart görmesin.
+        color: isColorId(color) ? color : nextColor(prev.goals.map((g) => g.color)),
+        plan: plan ?? null,
+        share: share ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      return { ...prev, goals: normalizeOrders([...prev.goals, goal]) };
+    });
   }
 
   function removeGoal(id) {
@@ -454,6 +485,11 @@ export default function App() {
   function reorderGoal(id, direction) {
     dirty.current = true;
     setState((prev) => ({ ...prev, goals: moveGoal(prev.goals, id, direction) }));
+  }
+
+  function reorderGoalToTop(id) {
+    dirty.current = true;
+    setState((prev) => ({ ...prev, goals: moveGoalToTop(prev.goals, id) }));
   }
 
   function shareGoal(id, code) {
@@ -673,6 +709,17 @@ export default function App() {
             </div>
           </section>
 
+          <EntryForm
+            currency={state.currency}
+            goals={state.goals}
+            entries={state.entries}
+            generalName={state.generalName}
+            onAdd={addEntry}
+          />
+
+          {/* Hatırlatma formun altında: uzun süredir kullanan birinde bu kart
+              ilk ekranı tek başına dolduruyor, asıl iş olan kayıt formu
+              kıvrımın altında kalıyordu. */}
           {prompting ? (
             <TransferCard
               entries={state.entries}
@@ -683,14 +730,6 @@ export default function App() {
               onConfirm={confirmTransfer}
             />
           ) : null}
-
-          <EntryForm
-            currency={state.currency}
-            goals={state.goals}
-            entries={state.entries}
-            generalName={state.generalName}
-            onAdd={addEntry}
-          />
 
           {justAdded ? (
             <div className="just-added">
@@ -723,6 +762,7 @@ export default function App() {
             onAdd={addGoal}
             onRemove={removeGoal}
             onMove={reorderGoal}
+            onMoveTop={reorderGoalToTop}
             onShare={shareGoal}
             onUnshare={unshareGoal}
             onDeleteShared={deleteSharedCopy}

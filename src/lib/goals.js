@@ -45,6 +45,18 @@ export function moveGoal(goals = [], id, direction) {
 }
 
 /**
+ * Hedefi listenin en başına alır. Altı hedefi olan biri son sıradakini
+ * ok tuşlarıyla sekiz dokunuşta taşıyordu; bu onu tek dokunuşa indiriyor.
+ */
+export function moveGoalToTop(goals = [], id) {
+  const sorted = sortGoals(goals);
+  const from = sorted.findIndex((g) => g?.id === id);
+  if (from <= 0) return withOrders(sorted);
+  const next = [sorted[from], ...sorted.filter((_, i) => i !== from)];
+  return withOrders(next);
+}
+
+/**
  * Yeni kaydın varsayılan gideceği hedef: sırada en öndeki tamamlanmamış hedef.
  * Hepsi tamamlanmışsa en öndeki hedef.
  */

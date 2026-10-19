@@ -543,7 +543,35 @@ describe('hedef düzenleme', () => {
     fireEvent.click(screen.getByText('Goals'));
     expect(container.querySelector('.goal-rank-0').textContent).toContain('Japan');
 
+    fireEvent.click(screen.getByText('Reorder'));
     fireEvent.click(screen.getAllByLabelText('Move up')[1]);
+    expect(container.querySelector('.goal-rank-0').textContent).toContain('House');
+  });
+
+  it('sıralama modu kapalıyken ok tuşları görünmez', () => {
+    seedTwoGoals();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.queryByLabelText('Move up')).toBeNull();
+    expect(screen.getAllByLabelText('Edit goal').length).toBeGreaterThan(0);
+  });
+
+  it('sıralama modunda düzenleme ve silme gizlenir', () => {
+    seedTwoGoals();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('Reorder'));
+    expect(screen.queryByLabelText('Edit goal')).toBeNull();
+    expect(screen.queryByLabelText('Remove goal')).toBeNull();
+    expect(screen.getAllByLabelText('Move to top').length).toBeGreaterThan(0);
+  });
+
+  it('en üste taşı tek dokunuşta sonuncuyu başa alır', () => {
+    seedTwoGoals();
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('Reorder'));
+    fireEvent.click(screen.getAllByLabelText('Move to top')[1]);
     expect(container.querySelector('.goal-rank-0').textContent).toContain('House');
   });
 });
@@ -979,5 +1007,81 @@ describe('ortak kopya karşı taraftan silinince', () => {
       expect(calls.filter((c) => c.url.includes('book_write')).length).toBeGreaterThan(0);
     });
     expect(screen.queryByText(/no longer shared/)).toBeNull();
+  });
+});
+
+describe('hedef silmede onay', () => {
+  function seedOne() {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        goals: [
+          { id: 'g1', name: 'Holiday', emoji: '🏖️', target: 120000, order: 0, createdAt: '2026-01-01T00:00:00.000Z' },
+        ],
+        entries: [
+          { id: 'e1', amount: 4500, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Ada' },
+        ],
+      })
+    );
+  }
+
+  it('tek dokunuşta silmez, önce sorar', () => {
+    seedOne();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByLabelText('Remove goal'));
+
+    expect(screen.getByText('Remove Holiday?')).toBeTruthy();
+    expect(screen.getAllByText('Holiday').length).toBeGreaterThan(0);
+  });
+
+  it('paranın nereye gideceğini söyler', () => {
+    seedOne();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByLabelText('Remove goal'));
+    expect(screen.getByText(/£45\.00 you logged moves to Everyday pot/)).toBeTruthy();
+  });
+
+  it('vazgeçince hedef durur', () => {
+    seedOne();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByLabelText('Remove goal'));
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(screen.queryByText('Remove Holiday?')).toBeNull();
+    expect(screen.getAllByText('Holiday').length).toBeGreaterThan(0);
+  });
+
+  it('onaylayınca siler ama kayıtlar genel kasaya geçer', () => {
+    seedOne();
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByLabelText('Remove goal'));
+    fireEvent.click(screen.getByText('Remove goal'));
+
+    expect(screen.queryByText('Holiday')).toBeNull();
+    expect(screen.getAllByText('£45.00').length).toBeGreaterThan(0);
+  });
+});
+
+describe('yeni hedefin rengi', () => {
+  it('arka arkaya kurulan hedefler farklı renk alır', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+
+    const names = ['Alpha', 'Beta', 'Gamma'];
+    for (const name of names) {
+      const opener = screen.queryByText('New goal');
+      if (opener) fireEvent.click(opener);
+      fireEvent.click(screen.getByText('Just saving'));
+      fireEvent.change(screen.getByPlaceholderText('Savings'), { target: { value: name } });
+      fireEvent.click(screen.getByText('Create goal'));
+    }
+
+    const saved = JSON.parse(window.localStorage.getItem('ortak-birikim-defteri:v1'));
+    const colors = saved.goals.map((g) => g.color);
+    expect(new Set(colors).size).toBe(3);
   });
 });
