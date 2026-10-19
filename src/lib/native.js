@@ -139,15 +139,24 @@ export async function applyNotificationPlan(plan = []) {
   }
 }
 
+// Sayfanın zemin rengi; durum çubuğu artık içeriğin üstüne binmediği için
+// o şerit de bu renkle boyanıyor, yoksa ekranın tepesinde yabancı bir bant
+// kalıyor.
+const CANVAS = { light: '#fffcf7', dark: '#121518' };
+
 /**
- * Durum çubuğundaki saat ve simgelerin rengi. Koyu temada açık, açık temada
- * da açık — çünkü üstteki blok her iki temada da koyu bir yüzey.
+ * Durum çubuğu: alanı iOS'un kendisi ayırıyor (üste binmiyor), zemini
+ * sayfayla aynı renk, yazısı da zemine göre. Açık temada koyu yazı,
+ * koyu temada açık yazı.
  */
-export async function setStatusBarStyle() {
+export async function setStatusBarStyle(theme) {
   if (!isNative()) return;
+  const dark = theme === 'dark';
   try {
-    await StatusBar.setStyle({ style: Style.Dark });
-    await StatusBar.setOverlaysWebView({ overlay: true });
+    await StatusBar.setOverlaysWebView({ overlay: false });
+    await StatusBar.setBackgroundColor({ color: dark ? CANVAS.dark : CANVAS.light });
+    // Capacitor'da Style.Dark "koyu zemin, açık yazı" demek.
+    await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
   } catch {
     // Android'de veya eski sürümlerde desteklenmeyebilir.
   }

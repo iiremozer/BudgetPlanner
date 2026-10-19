@@ -385,8 +385,9 @@ export default function GoalList({
                 </>
                 )}
               </div>
+            </div>
 
-              {/* Silme tek dokunuşla olmuyor artık: çöp kutusu kalemin yanında
+            {/* Silme tek dokunuşla olmuyor artık: çöp kutusu kalemin yanında
                   duruyor ve kaybolan şey hedefin adı, tutarı ve rengi. Paranın
                   nereye gittiğini de söylüyoruz, çünkü kayıtlar silinmiyor. */}
               {removing === goal.id ? (
@@ -521,7 +522,6 @@ export default function GoalList({
                   </div>
                 )
               ) : null}
-            </div>
           </article>
         );
       })}
