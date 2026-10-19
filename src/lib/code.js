@@ -34,12 +34,21 @@ export function formatCode(code) {
   return code.replace(/(.{4})(?=.)/g, '$1 ');
 }
 
-/** Kodu gönderirken kullanılan davet metni. Kimsenin adını taşımaz. */
+/**
+ * Kodu gönderirken kullanılan davet metni. Kimsenin adını taşımaz.
+ *
+ * Kod kendi satırında, yanında kelime olmadan ve boşluksuz duruyor: mesaj
+ * uygulamalarında çift dokunuş bütün kodu seçiyor, satırı basılı tutmak da
+ * yalnızca kodu veriyor. Ekranda dörderli gruplanmış hali okunaklı, ama
+ * mesajın içinde o boşluklar kopyalamayı zorlaştırıyordu.
+ */
 export function inviteText(goalName, code) {
   const name = typeof goalName === 'string' && goalName.trim() ? goalName.trim() : 'a goal';
   return [
-    `Let's save for ${name} together.`,
-    `Code: ${formatCode(code)}`,
-    'Open Our Savings Book, go to Goals, then "Join a shared goal".',
+    `Let's save for ${name} together in Our Savings Book.`,
+    '',
+    String(code ?? '').toUpperCase(),
+    '',
+    'Open the app, go to Goals, tap "Join a shared goal" and paste that code.',
   ].join('\n');
 }

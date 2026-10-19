@@ -61,10 +61,28 @@ describe('formatCode', () => {
 describe('inviteText', () => {
   const code = 'ABCDEFGH2345';
 
-  it('hedefin adını ve okunur kodu taşır', () => {
+  it('hedefin adını ve kodu taşır', () => {
     const text = inviteText('Holiday', code);
     expect(text).toContain('Holiday');
-    expect(text).toContain('ABCD EFGH 2345');
+    expect(text).toContain('ABCDEFGH2345');
+  });
+
+  it('kod kendi satırında, boşluksuz ve tek başına durur', () => {
+    const lines = inviteText('Holiday', code).split('\n');
+    expect(lines).toContain('ABCDEFGH2345');
+    // Kodun satırında başka hiçbir şey yok: çift dokunuş hepsini seçsin.
+    expect(lines.filter((l) => l.includes('ABCDEFGH2345'))).toEqual(['ABCDEFGH2345']);
+  });
+
+  it('kodun iki yanında boş satır var', () => {
+    const lines = inviteText('Holiday', code).split('\n');
+    const i = lines.indexOf('ABCDEFGH2345');
+    expect(lines[i - 1]).toBe('');
+    expect(lines[i + 1]).toBe('');
+  });
+
+  it('kodu asla gruplamaz', () => {
+    expect(inviteText('Holiday', code)).not.toContain('ABCD EFGH');
   });
 
   it('nereye gireceğini söyler', () => {
