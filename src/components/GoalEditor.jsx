@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { parseAmount, formatMoney } from '../lib/money.js';
-import { PALETTE, colorForEmoji } from '../lib/colors.js';
+import { PALETTE, colorForEmoji, colorOf, isHexColor } from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate } from '../lib/pace.js';
 
 const EMOJIS = ['🎯', '🏖️', '🏠', '🚗', '📚', '🎁', '🛫', '🪴'];
@@ -17,6 +17,7 @@ export default function GoalEditor({ goal, currency, onSave, onCancel }) {
   const [period, setPeriod] = useState(goal.plan?.period ?? 'week');
   const [emoji, setEmoji] = useState(goal.emoji);
   const [color, setColor] = useState(goal.color);
+  const [ownIcon, setOwnIcon] = useState(false);
   const [error, setError] = useState('');
 
   const targetValue = hasTarget ? parseAmount(target) : 0;
@@ -133,12 +134,12 @@ export default function GoalEditor({ goal, currency, onSave, onCancel }) {
 
       <div>
         <span className="field-label">Icon</span>
-        <div className="chips">
+        <div className="icon-row">
           {EMOJIS.map((e) => (
             <button
               key={e}
               type="button"
-              className="chip"
+              className="chip chip-icon"
               aria-pressed={emoji === e}
               onClick={() => {
                 setEmoji(e);
@@ -148,7 +149,30 @@ export default function GoalEditor({ goal, currency, onSave, onCancel }) {
               {e}
             </button>
           ))}
+          <button
+            type="button"
+            className={`chip chip-icon chip-more${EMOJIS.includes(emoji) ? '' : ' chip-icon-custom'}`}
+            aria-label="Use your own icon"
+            aria-pressed={!EMOJIS.includes(emoji)}
+            onClick={() => setOwnIcon(!ownIcon)}
+          >
+            {EMOJIS.includes(emoji) ? '+' : emoji}
+          </button>
         </div>
+        {ownIcon ? (
+          <input
+            className="control"
+            style={{ marginTop: 8 }}
+            type="text"
+            maxLength={8}
+            placeholder="Paste any emoji"
+            value={EMOJIS.includes(emoji) ? '' : emoji}
+            onChange={(e) => {
+              const value = [...e.target.value.trim()].slice(0, 4).join('');
+              if (value) setEmoji(value);
+            }}
+          />
+        ) : null}
       </div>
 
       <div>
@@ -165,6 +189,17 @@ export default function GoalEditor({ goal, currency, onSave, onCancel }) {
               onClick={() => setColor(c.id)}
             />
           ))}
+          <label
+            className={`swatch swatch-custom${isHexColor(color) ? ' is-on' : ''}`}
+            style={isHexColor(color) ? { background: color } : undefined}
+            aria-label="Pick your own colour"
+          >
+            <input
+              type="color"
+              value={isHexColor(color) ? color : colorOf(color).base}
+              onChange={(e) => setColor(e.target.value.toLowerCase())}
+            />
+          </label>
         </div>
       </div>
 

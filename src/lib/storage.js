@@ -96,13 +96,18 @@ function cleanGoal(raw) {
     };
   }
 
-  const emoji = typeof raw.emoji === 'string' && raw.emoji ? raw.emoji : '🎯';
+  // Kullanıcı kendi simgesini yazabiliyor; uzunluğu sınırlıyoruz ki
+  // deftere paragraf kaçmasın.
+  const rawEmoji = typeof raw.emoji === 'string' ? raw.emoji.trim() : '';
+  const emoji = rawEmoji ? [...rawEmoji].slice(0, 4).join('') : '🎯';
 
   return {
     id,
     name,
     emoji,
-    color: isColorId(raw.color) ? raw.color : colorForEmoji(emoji),
+    // Kendi rengi "#rrggbb" olarak saklanır; küçük harfe indiriyoruz ki
+    // karşılaştırmalar tutarlı olsun.
+    color: isColorId(raw.color) ? String(raw.color).toLowerCase() : colorForEmoji(emoji),
     target,
     plan,
     order: Number.isFinite(raw.order) ? Math.max(0, Math.round(raw.order)) : null,

@@ -1085,3 +1085,48 @@ describe('yeni hedefin rengi', () => {
     expect(new Set(colors).size).toBe(3);
   });
 });
+
+describe('kendi rengi ve kendi simgesi', () => {
+  function openEditor() {
+    render(<App />);
+    fireEvent.click(screen.getByText('Goals'));
+    fireEvent.click(screen.getByText('New goal'));
+    fireEvent.click(screen.getByText('Just saving'));
+    fireEvent.change(screen.getByPlaceholderText('Savings'), { target: { value: 'Ski trip' } });
+  }
+
+  it('renk seçicisi tek sırada ve kendi rengi var', () => {
+    openEditor();
+    expect(screen.getByLabelText('Pick your own colour')).toBeTruthy();
+  });
+
+  it('seçilen özel renk hedefe kaydedilir', () => {
+    openEditor();
+    const picker = screen.getByLabelText('Pick your own colour').querySelector('input');
+    fireEvent.change(picker, { target: { value: '#3F7FD1' } });
+    fireEvent.click(screen.getByText('Create goal'));
+
+    const saved = JSON.parse(window.localStorage.getItem('ortak-birikim-defteri:v1'));
+    expect(saved.goals[0].color).toBe('#3f7fd1');
+  });
+
+  it('kendi simgesi yazılabilir ve kaydedilir', () => {
+    openEditor();
+    fireEvent.click(screen.getByLabelText('Use your own icon'));
+    fireEvent.change(screen.getByPlaceholderText('Paste any emoji'), { target: { value: '⛷️' } });
+    fireEvent.click(screen.getByText('Create goal'));
+
+    const saved = JSON.parse(window.localStorage.getItem('ortak-birikim-defteri:v1'));
+    expect(saved.goals[0].emoji).toBe('⛷️');
+  });
+
+  it('özel renk kart ve kavanozda kullanılır', () => {
+    openEditor();
+    const picker = screen.getByLabelText('Pick your own colour').querySelector('input');
+    fireEvent.change(picker, { target: { value: '#3f7fd1' } });
+    fireEvent.click(screen.getByText('Create goal'));
+
+    const card = document.querySelector('.goal-tinted');
+    expect(card.getAttribute('style')).toContain('#3f7fd1');
+  });
+});

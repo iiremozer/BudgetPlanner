@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatMoney, parseAmount } from '../lib/money.js';
+
+// Kartlar arasındaki boşluk (styles.css: .goal + .goal.goal-tinted margin-top).
+const GOAL_GAP = 10;
+// Sürüklerken ekranın kenarına bu kadar yaklaşınca sayfa kayar.
+const EDGE_PX = 90;
+const EDGE_STEP = 10;
 import { goalProgress, savedForGoal } from '../lib/savings.js';
 import { milestoneProgress } from '../lib/milestones.js';
-import { PALETTE, SLATE, colorOf, colorForEmoji, tintFor, nextColor } from '../lib/colors.js';
+import {
+  PALETTE,
+  SLATE,
+  colorOf,
+  colorForEmoji,
+  tintFor,
+  nextColor,
+  isHexColor,
+} from '../lib/colors.js';
 import { PERIOD_IDS, PERIODS, periodsNeeded, finishDate, ratePerWeek, weeksAtRate } from '../lib/pace.js';
 import { sortGoals, uniqueGoalName } from '../lib/goals.js';
 import { formatCode, makeBookCode, normalizeCode, inviteText } from '../lib/code.js';
@@ -65,6 +79,86 @@ export default function GoalList({
   const [stopping, setStopping] = useState(null);
   const [removing, setRemoving] = useState(null);
   const [sorting, setSorting] = useState(false);
+  const [dragId, setDragId] = useState(null);
+  const [ownIcon, setOwnIcon] = useState(false);
+
+  // Sürükleme: kartın DOM düğümlerini tutuyoruz ki komşunun ortasını ne zaman
+  // geçtiğimizi ölçebilelim. Taşıma, zaten var olan tek adımlık onMove ile
+  // yapılıyor; böylece sıralama mantığı tek yerde kalıyor.
+  const cardRefs = useRef(new Map());
+  const drag = useRef(null);
+
+  function setCardRef(id, node) {
+    if (node) cardRefs.current.set(id, node);
+    else cardRefs.current.delete(id);
+  }
+
+  function dragStart(e, id) {
+    if (!sorting) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const node = cardRefs.current.get(id);
+    if (!node) return;
+    try {
+      node.setPointerCapture(e.pointerId);
+    } catch {
+      // Yakalama desteklenmiyorsa olaylar yine de bu düğüme geliyor.
+    }
+    drag.current = { id, pointerId: e.pointerId, startY: e.clientY, order: [] };
+    setDragId(id);
+  }
+
+  function dragMove(e, order) {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const node = cardRefs.current.get(d.id);
+    if (!node) return;
+
+    const dy = e.clientY - d.startY;
+    node.style.transform = `translateY(${dy}px)`;
+
+    // Liste ekrana sığmıyorsa kenara yaklaşınca sayfayı kaydırıyoruz,
+    // yoksa alttaki hedefi yukarı taşımak mümkün olmuyor.
+    const view = typeof window === 'undefined' ? 0 : window.innerHeight;
+    if (view) {
+      if (e.clientY < EDGE_PX) window.scrollBy(0, -EDGE_STEP);
+      else if (e.clientY > view - EDGE_PX) window.scrollBy(0, EDGE_STEP);
+    }
+
+    const index = order.indexOf(d.id);
+    const rect = node.getBoundingClientRect();
+
+    const above = index > 0 ? cardRefs.current.get(order[index - 1]) : null;
+    if (above) {
+      const r = above.getBoundingClientRect();
+      if (rect.top < r.top + r.height / 2) {
+        // Kart yukarıdakinin yarısını geçti: yer değiştir ve başlangıcı
+        // kaydır ki kart parmağın altında kalsın.
+        d.startY -= r.height + GOAL_GAP;
+        node.style.transform = `translateY(${e.clientY - d.startY}px)`;
+        onMove(d.id, 'up');
+        return;
+      }
+    }
+
+    const below = index > -1 && index < order.length - 1 ? cardRefs.current.get(order[index + 1]) : null;
+    if (below) {
+      const r = below.getBoundingClientRect();
+      if (rect.bottom > r.bottom - r.height / 2) {
+        d.startY += r.height + GOAL_GAP;
+        node.style.transform = `translateY(${e.clientY - d.startY}px)`;
+        onMove(d.id, 'down');
+      }
+    }
+  }
+
+  function dragEnd(e) {
+    const d = drag.current;
+    if (!d || (e && e.pointerId !== d.pointerId)) return;
+    const node = cardRefs.current.get(d.id);
+    if (node) node.style.transform = '';
+    drag.current = null;
+    setDragId(null);
+  }
   const [renaming, setRenaming] = useState(false);
   const [generalDraft, setGeneralDraft] = useState(generalName);
   const [open, setOpen] = useState(false);
@@ -152,16 +246,28 @@ export default function GoalList({
         </p>
       ) : null}
 
+      {sorting && goals.length > 1 ? (
+        <p className="hint" style={{ marginBottom: 10 }}>
+          Hold a goal and drag it, or use the arrows.
+        </p>
+      ) : null}
+
       {sortGoals(goals).map((goal, index, list) => {
+        const order = list.map((g) => g.id);
         const p = goalProgress(goal, entries);
         const line = planLine(goal, p, entries, currency);
         const tone = colorOf(goal.color);
         return (
           <article
             key={goal.id}
+            ref={(node) => setCardRef(goal.id, node)}
             className={`goal goal-tinted goal-rank-${Math.min(index, 3)}${
               p.complete ? ' goal-done' : ''
-            }`}
+            }${sorting ? ' goal-sortable' : ''}${dragId === goal.id ? ' goal-dragging' : ''}`}
+            onPointerDown={(e) => dragStart(e, goal.id)}
+            onPointerMove={(e) => dragMove(e, order)}
+            onPointerUp={dragEnd}
+            onPointerCancel={dragEnd}
             style={{ '--tone': tone.base, '--tone-tint': tintFor(tone, theme) }}
           >
             <Jar
@@ -644,12 +750,12 @@ export default function GoalList({
 
           <div>
             <span className="field-label">Icon</span>
-            <div className="chips">
+            <div className="icon-row">
               {EMOJIS.map((e) => (
                 <button
                   key={e}
                   type="button"
-                  className="chip"
+                  className="chip chip-icon"
                   aria-pressed={emoji === e}
                   onClick={() => {
                     setEmoji(e);
@@ -659,7 +765,35 @@ export default function GoalList({
                   {e}
                 </button>
               ))}
+              {/* Kendi simgesi: telefon klavyesindeki emoji tuşundan ne
+                  gelirse onu alıyoruz, listeyle sınırlı değil. */}
+              <button
+                type="button"
+                className={`chip chip-icon chip-more${
+                  EMOJIS.includes(emoji) ? '' : ' chip-icon-custom'
+                }`}
+                aria-label="Use your own icon"
+                aria-pressed={!EMOJIS.includes(emoji)}
+                onClick={() => setOwnIcon(!ownIcon)}
+              >
+                {EMOJIS.includes(emoji) ? '+' : emoji}
+              </button>
             </div>
+            {ownIcon ? (
+              <input
+                className="control"
+                style={{ marginTop: 8 }}
+                type="text"
+                inputMode="text"
+                maxLength={8}
+                placeholder="Paste any emoji"
+                value={EMOJIS.includes(emoji) ? '' : emoji}
+                onChange={(e) => {
+                  const value = [...e.target.value.trim()].slice(0, 4).join('');
+                  if (value) setEmoji(value);
+                }}
+              />
+            ) : null}
           </div>
 
           <div>
@@ -676,6 +810,18 @@ export default function GoalList({
                   onClick={() => setColor(c.id)}
                 />
               ))}
+              {/* Kendi rengi: telefonun kendi renk seçicisi açılıyor. */}
+              <label
+                className={`swatch swatch-custom${isHexColor(activeColor) ? ' is-on' : ''}`}
+                style={isHexColor(activeColor) ? { background: activeColor } : undefined}
+                aria-label="Pick your own colour"
+              >
+                <input
+                  type="color"
+                  value={isHexColor(activeColor) ? activeColor : colorOf(activeColor).base}
+                  onChange={(e) => setColor(e.target.value.toLowerCase())}
+                />
+              </label>
             </div>
           </div>
 

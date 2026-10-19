@@ -82,10 +82,56 @@ export function tintFor(color, theme) {
 export const DEFAULT_COLOR = 'amber';
 
 export function isColorId(id) {
-  return PALETTE.some((c) => c.id === id);
+  return PALETTE.some((c) => c.id === id) || isHexColor(id);
+}
+
+/** Kullanıcının kendi seçtiği renk "#rrggbb" olarak saklanıyor. */
+export function isHexColor(value) {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+}
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return { h: 0, s: 0, l };
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+  return { h, s, l };
+}
+
+const pct = (v) => `${Math.round(Math.max(0, Math.min(1, v)) * 100)}%`;
+
+/**
+ * Tek bir renkten kartın ihtiyaç duyduğu beş tonu türetir: kavanozun sıvısı
+ * için açık/koyu uçlar, kart zemini için açık ve koyu temada birer sırlı ton.
+ */
+export function toneFromHex(hex) {
+  const { h, s, l } = hexToHsl(hex);
+  const deg = Math.round(h * 360);
+  const sat = Math.max(0.18, Math.min(0.85, s));
+  const hsl = (lightness, saturation = sat) =>
+    `hsl(${deg} ${pct(saturation)} ${pct(lightness)})`;
+  return {
+    id: hex.toLowerCase(),
+    name: 'Custom',
+    base: hex,
+    light: hsl(Math.min(0.78, l + 0.12)),
+    dark: hsl(Math.max(0.16, l - 0.14)),
+    tint: hsl(0.95, Math.min(0.6, sat)),
+    tintDark: hsl(0.15, Math.min(0.5, sat)),
+  };
 }
 
 export function colorOf(id) {
+  if (isHexColor(id)) return toneFromHex(id);
   return PALETTE.find((c) => c.id === id) ?? PALETTE.find((c) => c.id === DEFAULT_COLOR);
 }
 
