@@ -73,7 +73,11 @@ function cleanMember(raw) {
 function cleanShare(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const code = typeof raw.code === 'string' ? raw.code.trim().toUpperCase() : '';
-  return /^[A-Z0-9]{8,24}$/.test(code) ? { code } : null;
+  if (!/^[A-Z0-9]{8,24}$/.test(code)) return null;
+  // published: bu kod sunucuda bir kez gerçekten yazıldı mı. Sunucu sonradan
+  // "yok" derse, bu bayrak sayesinde bunu "karşı taraf sildi" diye okuyabiliyoruz;
+  // yeni kurulan bir paylaşımın ilk yazımıyla karıştırmıyoruz.
+  return raw.published === true ? { code, published: true } : { code };
 }
 
 function cleanGoal(raw) {

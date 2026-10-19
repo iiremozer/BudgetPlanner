@@ -122,12 +122,27 @@ export default function App() {
       for (const goal of shared) {
         const code = goal.share.code;
         const remote = await readBook(code);
+
+        // Sunucu "böyle bir defter yok" diyorsa ve biz daha önce oraya
+        // yazmışsak, karşı taraf ortak kopyayı silmiş demektir. Eskiden
+        // burada körlemesine yeniden yazıyorduk; silinen defter bir dakika
+        // içinde geri doğuyor, kodu bilen herkes tekrar içeri girebiliyordu.
+        // Artık paylaşımı bu cihazda da bitiriyoruz: hedef ve kayıtlar kalır.
+        if (remote == null && goal.share.published) {
+          unshareGoal(goal.id);
+          setNotice(
+            `${goal.name} is no longer shared — the shared copy was deleted. The goal and everything you logged are still on this phone.`
+          );
+          continue;
+        }
+
         // Birleştirmeyi burada yapıyoruz: setState güncelleyicisi sonradan
         // çalıştığı için sonucu oradan okumak güvenilir değil.
         const merged = mergeGoalBook(stateRef.current, remote, goal.id);
         stateRef.current = merged;
         setState(merged);
         await writeBook(code, shareableGoal(merged, goal.id));
+        markPublished(goal.id);
       }
       dirty.current = false;
       lastSyncAt.current = Date.now();
@@ -514,6 +529,23 @@ export default function App() {
     }));
   }
 
+  /**
+   * Bu kodun sunucuda gerçekten bir karşılığı olduğunu işaretler. Sonraki bir
+   * senkronda sunucu "yok" derse, bunun silinme olduğunu buradan biliyoruz.
+   */
+  function markPublished(id) {
+    setState((prev) => {
+      const goal = prev.goals.find((g) => g.id === id);
+      if (!goal?.share?.code || goal.share.published) return prev;
+      const goals = prev.goals.map((g) =>
+        g.id === id ? { ...g, share: { ...g.share, published: true } } : g
+      );
+      const next = { ...prev, goals };
+      stateRef.current = next;
+      return next;
+    });
+  }
+
   async function joinGoal(code) {
     setStatus('syncing');
     try {
@@ -527,7 +559,10 @@ export default function App() {
       const withShare = {
         ...merged,
         goals: normalizeOrders(
-          merged.goals.map((g) => (g.id === goalId ? { ...g, share: { code } } : g))
+          // Katıldığımız defter sunucuda zaten var; published en baştan doğru.
+          merged.goals.map((g) =>
+            g.id === goalId ? { ...g, share: { code, published: true } } : g
+          )
         ),
       };
       stateRef.current = withShare;
@@ -578,9 +613,12 @@ export default function App() {
 
       <Masthead onOpenSettings={() => setSettingsOpen(true)} />
 
+      {/* Uyarı hangi sekmede olursan ol görünür: paylaşımın bittiğini
+          yalnızca Hedefler sekmesinde söylemek, kimsenin görmemesi demek. */}
+      {noticeBox}
+
       {settingsOpen ? (
         <div className="settings-view panel" ref={settingsRef}>
-        {noticeBox}
         <Settings
           member={state.member}
           currency={state.currency}
@@ -676,7 +714,6 @@ export default function App() {
 
       {tab === 'goals' ? (
         <div className="panel">
-          {noticeBox}
           <GoalList
             goals={state.goals}
             entries={state.entries}

@@ -908,3 +908,76 @@ describe('ayarlardan çıkış', () => {
     expect(screen.getByText('Settings')).toBeTruthy();
   });
 });
+
+describe('ortak kopya karşı taraftan silinince', () => {
+  function seedPublished(published) {
+    window.localStorage.setItem(
+      'ortak-birikim-defteri:v1',
+      JSON.stringify({
+        currency: 'GBP',
+        member: { id: 'm1', name: 'Ada' },
+        goals: [
+          {
+            id: 'g1',
+            name: 'House',
+            emoji: '🏠',
+            target: 500000,
+            order: 0,
+            createdAt: '2026-01-01T00:00:00.000Z',
+            share: published ? { code: 'ABCD1234EFGH', published: true } : { code: 'ABCD1234EFGH' },
+          },
+        ],
+        entries: [
+          { id: 'e1', amount: 5000, goalId: 'g1', at: '2026-03-01T10:00:00.000Z', by: 'Ada' },
+        ],
+      })
+    );
+  }
+
+  /** book_read null döner (defter yok), book_write çağrılırsa yakalarız. */
+  function serverSaysGone() {
+    const calls = [];
+    const fetchMock = vi.fn((url, init) => {
+      calls.push({ url: String(url), body: init?.body ? JSON.parse(init.body) : null });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(null) });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return calls;
+  }
+
+  it('silinen defteri geri yazmaz, paylaşımı bu cihazda bitirir', async () => {
+    const calls = serverSaysGone();
+    seedPublished(true);
+    render(<App />);
+
+    await vi.waitFor(() => expect(screen.getByText(/no longer shared/)).toBeTruthy());
+
+    const writes = calls.filter((c) => c.url.includes('book_write'));
+    expect(writes).toHaveLength(0);
+
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getByLabelText('Share this goal')).toBeTruthy();
+  });
+
+  it('hedef ve kayıtlar cihazda kalır', async () => {
+    serverSaysGone();
+    seedPublished(true);
+    render(<App />);
+
+    await vi.waitFor(() => expect(screen.getByText(/no longer shared/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Goals'));
+    expect(screen.getAllByText('House').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('£50.00').length).toBeGreaterThan(0);
+  });
+
+  it('henüz yayınlanmamış kod ilk yazımı yapar, paylaşım bitmez', async () => {
+    const calls = serverSaysGone();
+    seedPublished(false);
+    render(<App />);
+
+    await vi.waitFor(() => {
+      expect(calls.filter((c) => c.url.includes('book_write')).length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/no longer shared/)).toBeNull();
+  });
+});
