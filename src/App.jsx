@@ -14,6 +14,7 @@ import { formatMoney } from './lib/money.js';
 import { markDeleted, shareableGoal, mergeGoalBook } from './lib/sync.js';
 import { mergeBackup, replaceWithBackup } from './lib/backup.js';
 import { shouldPrompt, pendingAmount } from './lib/transfers.js';
+import { hasNewerBuild } from './lib/freshness.js';
 import { newFromOthers } from './lib/contributions.js';
 import { pendingCelebration } from './lib/celebration.js';
 import { resolveTheme, accentOf, accentRoles, isColorId, nextColor } from './lib/colors.js';
@@ -46,6 +47,8 @@ const FOCUS_MIN_GAP_MS = 20_000;
 const TICK_MS = 20_000;
 // Paylaşımlı hedefe kayıt girildiğinde beklenecek kısa süre.
 const QUICK_PUSH_MS = 2_500;
+// Yeni sürüm kontrolü en fazla bu sıklıkta.
+const FRESH_MIN_GAP_MS = 60_000;
 const PULL_THRESHOLD = 64;
 
 function statusText(status, lastSync) {
@@ -203,6 +206,33 @@ export default function App() {
       document.removeEventListener('visibilitychange', onWake);
     };
   }, [hasShared, sync]);
+
+  // Canlı modda sayfa yayından geliyor ve tarayıcı onu önbellekte tutuyor:
+  // yeni sürüm yayınlansa da uygulama bir süre eskisini açmaya devam ediyor.
+  // Açılışta ve uygulamaya her dönüşte bir kez bakıp, değişmişse yeniliyoruz.
+  const lastFreshCheck = useRef(0);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check() {
+      if (cancelled) return;
+      if (Date.now() - lastFreshCheck.current < FRESH_MIN_GAP_MS) return;
+      lastFreshCheck.current = Date.now();
+      if (await hasNewerBuild()) {
+        if (!cancelled) window.location.reload();
+      }
+    }
+
+    check();
+    const onShow = () => {
+      if (document.visibilityState === 'visible') check();
+    };
+    document.addEventListener('visibilitychange', onShow);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onShow);
+    };
+  }, []);
 
   // Android'in geri tuşu: önce ayarları kapatır, sonra Save sekmesine döner.
   useEffect(() => {
