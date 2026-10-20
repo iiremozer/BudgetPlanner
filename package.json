@@ -13,7 +13,9 @@
     "sync": "npm run build:native && cap sync",
     "ios": "npm run sync && cap open ios",
     "android": "npm run sync && cap open android",
-    "ios:target": "bash scripts/ios-target.sh"
+    "ios:target": "bash scripts/ios-target.sh",
+    "live:on": "node scripts/live-mode.mjs on",
+    "live:off": "node scripts/live-mode.mjs off"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
