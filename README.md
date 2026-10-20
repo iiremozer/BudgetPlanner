@@ -30,6 +30,29 @@ geri diriltmesin.
 iOS ve Android için Capacitor kullanılıyor; aynı kod hem web'de hem mağazalarda.
 Mac'te kurulum adımları: `NATIVE.md`.
 
+## Canlı mod
+
+Kurulu uygulamaya her değişiklik için kabloyla yeniden derleme gerekmesin diye
+kabuk, web dosyalarını yayından okuyabiliyor:
+
+```bash
+npm run live:on   # kabuk yayındaki sürümü okur — günlük geliştirme
+npm run sync      # bir kez kabloyla kur; sonrası kablosuz
+npm run live:off  # dosyalar yine uygulamanın içinde — mağazaya çıkarken
+```
+
+Açıkken her push, uygulamanın bir sonraki açılışında telefona iner. Üç not:
+
+- Açılışta internet gerekiyor; yoksa uygulamanın içindeki `offline.html` açılır.
+- Dosyaların kaynağı değiştiği için tarayıcı deposu sıfırdan başlar; defter
+  açılışta native kopyadan geri yüklenir. Geçmeden önce yedek al.
+- İmza süresi ayrı bir konu: bedava hesapla 7 günde bir Xcode'dan yenilemek
+  gerekiyor, bunu canlı mod çözmüyor.
+- Mağaza sürümünde kapalı olmalı.
+
+Ayarların en altındaki `Build ...` damgası, o an hangi sürümün açık olduğunu
+söyler.
+
 ## Komutlar
 
 ```bash
@@ -40,6 +63,8 @@ npm run build   # dist/ üretir (GitHub Pages)
 npm run sync    # native derleme + iOS/Android projelerine kopyala
 npm run ios     # Xcode'u açar
 npm run android # Android Studio'yu açar
+npm run live:on # kabuk yayını okusun
+npm run live:off# dosyalar uygulamanın içinde kalsın
 ```
 
 ## Yapı
