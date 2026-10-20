@@ -7,6 +7,23 @@ import { isNative, requestNotificationPermission } from '../lib/native.js';
 
 const THEME_LABELS = { system: 'Match phone', light: 'Light', dark: 'Dark' };
 
+/** Bu sürümün derlendiği an. Hangi sürüme baktığını buradan anlıyorsun. */
+function buildStamp() {
+  try {
+    if (typeof __BUILD_AT__ === 'undefined') return '';
+    const at = new Date(__BUILD_AT__);
+    if (Number.isNaN(at.getTime())) return '';
+    return `Build ${at.toLocaleString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+  } catch {
+    return '';
+  }
+}
+
 export default function Settings({
   member,
   currency,
@@ -460,6 +477,8 @@ export default function Settings({
       <button type="button" className="btn btn-ghost settings-close" onClick={onClose}>
         Close settings
       </button>
+
+      <p className="build-stamp">{buildStamp()}</p>
     </>
   );
 }

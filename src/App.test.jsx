@@ -1130,3 +1130,11 @@ describe('kendi rengi ve kendi simgesi', () => {
     expect(card.getAttribute('style')).toContain('#3f7fd1');
   });
 });
+
+describe('sürüm damgası', () => {
+  it('ayarların altında derleme anı görünür', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    expect(screen.getByText(/^Build /)).toBeTruthy();
+  });
+});

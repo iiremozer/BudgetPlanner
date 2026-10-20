@@ -19,6 +19,9 @@ const isNativeBuild = process.env.VITE_BASE === './';
 
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/BudgetPlanner/',
+  // Derleme anı ayarların en altında görünüyor: canlı modda telefondaki
+  // uygulamanın hangi sürümü okuduğunu anlamanın tek yolu bu.
+  define: { __BUILD_AT__: JSON.stringify(new Date().toISOString()) },
   plugins: isNativeBuild ? [react(), stripCrossorigin()] : [react()],
   test: {
     environment: 'node',
