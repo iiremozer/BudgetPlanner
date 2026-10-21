@@ -211,6 +211,40 @@ describe('yedekleme', () => {
     expect(screen.getByText(/Saved 0 wins/)).toBeTruthy();
     document.createElement.mockRestore();
   });
+
+  it('yapıştırılan yedek geri yüklenebilir', () => {
+    const backup = {
+      format: 'our-savings-book/backup',
+      version: 1,
+      state: {
+        currency: 'GBP',
+        goals: [],
+        entries: [{ id: 'e1', amount: 500, goalId: null, at: new Date().toISOString(), note: 'Tea' }],
+      },
+    };
+
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Paste a copy'));
+    fireEvent.change(screen.getByPlaceholderText('Paste the copied backup here'), {
+      target: { value: JSON.stringify(backup) },
+    });
+    fireEvent.click(screen.getByText('Use this copy'));
+
+    expect(screen.getByText(/That file has 1 wins and 0 goals/)).toBeTruthy();
+  });
+
+  it('yedek olmayan metni reddeder', () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Settings'));
+    fireEvent.click(screen.getByText('Paste a copy'));
+    fireEvent.change(screen.getByPlaceholderText('Paste the copied backup here'), {
+      target: { value: 'hello' },
+    });
+    fireEvent.click(screen.getByText('Use this copy'));
+
+    expect(screen.getByText('That text is not a savings book backup.')).toBeTruthy();
+  });
 });
 
 describe('gerçek aktarım', () => {

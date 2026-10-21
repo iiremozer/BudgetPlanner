@@ -3,7 +3,7 @@ import { CURRENCIES, CURRENCY_CODES } from '../lib/money.js';
 import { toBackup, fromBackup, backupFilename } from '../lib/backup.js';
 import { normalizeBankLink, hostOf } from '../lib/banklink.js';
 import { ACCENTS, THEMES } from '../lib/colors.js';
-import { isNative, requestNotificationPermission } from '../lib/native.js';
+import { isNative, requestNotificationPermission, shareBackupText } from '../lib/native.js';
 
 const THEME_LABELS = { system: 'Match phone', light: 'Light', dark: 'Dark' };
 
@@ -52,14 +52,25 @@ export default function Settings({
   // Silinirken sunucudaki kopyası da gidecek hedeflerin kimlikleri.
   const [alsoDelete, setAlsoDelete] = useState([]);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  // Native uygulamadan "Kopyala" ile alınan yedek buraya yapıştırılıyor.
+  const [pasting, setPasting] = useState(false);
+  const [pasted, setPasted] = useState('');
   const fileInput = useRef(null);
   const [bank, setBank] = useState(bankLink?.url ?? '');
   const [bankError, setBankError] = useState('');
 
   const sharedGoals = (state?.goals ?? []).filter((goal) => goal?.share?.code);
 
-  function exportBackup() {
+  async function exportBackup() {
     const payload = toBackup(state);
+    if (isNative()) {
+      if (await shareBackupText(JSON.stringify(payload))) {
+        setMessage(
+          `Shared ${payload.counts.entries} wins and ${payload.counts.goals} goals. To move them to the home-screen app, choose Copy and use "Paste a copy" there.`
+        );
+      }
+      return;
+    }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -76,6 +87,18 @@ export default function Settings({
       }
     }, 1000);
     setMessage(`Saved ${payload.counts.entries} wins and ${payload.counts.goals} goals.`);
+  }
+
+  function readPasted() {
+    const restored = fromBackup(pasted.trim());
+    if (!restored) {
+      setMessage('That text is not a savings book backup.');
+      return;
+    }
+    setPending(restored);
+    setPasting(false);
+    setPasted('');
+    setMessage('');
   }
 
   function readFile(file) {
@@ -372,10 +395,47 @@ export default function Settings({
                 Cancel
               </button>
             </div>
+          ) : pasting ? (
+            <div className="restore-panel">
+              <textarea
+                className="control"
+                rows={4}
+                placeholder="Paste the copied backup here"
+                value={pasted}
+                onChange={(e) => setPasted(e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={pasted.trim() === ''}
+                onClick={readPasted}
+              >
+                Use this copy
+              </button>
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  setPasting(false);
+                  setPasted('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           ) : (
-            <button type="button" className="btn btn-ghost" onClick={() => fileInput.current?.click()}>
-              Restore from a file
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => fileInput.current?.click()}
+              >
+                Restore from a file
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => setPasting(true)}>
+                Paste a copy
+              </button>
+            </>
           )}
 
           {message ? <p className="preview">{message}</p> : null}

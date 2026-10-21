@@ -57,6 +57,22 @@ export async function shareText(text) {
 }
 
 /**
+ * Yedeği native paylaşım menüsüyle verir. Native kabuktaki web görünümü
+ * dosya indiremiyor; "Kopyala" ile alınan metin ana ekrandaki web
+ * uygulamasına yapıştırılıp geri yüklenebiliyor. Başarılıysa true.
+ */
+export async function shareBackupText(text) {
+  if (!isNative()) return false;
+  try {
+    await Share.share({ title: 'Savings book backup', text });
+    return true;
+  } catch {
+    // Paylaşımdan vazgeçmek hata değil.
+    return false;
+  }
+}
+
+/**
  * Bankanın adresini açar. Native tarafta uygulama içi tarayıcı kullanılır;
  * Apple, giriş için harici Safari'ye atan uygulamaları reddedebiliyor.
  */
