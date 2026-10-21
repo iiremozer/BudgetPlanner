@@ -781,7 +781,7 @@ describe('bildirim ayarları', () => {
   it('tarayıcıda çalışmadığını söyler', () => {
     render(<App />);
     fireEvent.click(screen.getByLabelText('Settings'));
-    expect(screen.getByText(/only work in the installed app/)).toBeTruthy();
+    expect(screen.getByText(/only work in the Xcode-installed app/)).toBeTruthy();
   });
 
   it('web ortamında izin alınamayınca açılmaz', async () => {

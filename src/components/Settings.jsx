@@ -175,7 +175,7 @@ export default function Settings({
         <div className="stack">
           {isNative() ? null : (
             <p className="hint">
-              Reminders only work in the installed app, not in the browser.
+              Reminders only work in the Xcode-installed app, not in the browser or the home-screen app.
             </p>
           )}
 
